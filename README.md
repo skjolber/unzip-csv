@@ -40,7 +40,7 @@ ZipFileEngine engine = new ZipFileEngine(handler);
 boolean success = engine.handle(new FileZipFileFactory(file));
 ```
 
-where the default thread count is one per core.
+where the default thread count is one per core. Optionally wrap your handler in `NewLineSplitterEntryHandler` for splitting (and processing) files into parts based on file-size and newlines.
 
 ### AbstractCsvFileEntryHandler
 Implement the abstract method

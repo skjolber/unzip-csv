@@ -1,5 +1,6 @@
 package com.github.skjolber.unzip;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -8,12 +9,17 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Byte-array cache for remote HTTP content. Sees the remote content as a number of segments which are
+ * locked and downloaded individually. 
+ */
+
 public class UrlByteChannelCache {
 
 	private static class Part {
-		private volatile boolean downloaded = false;
+		private volatile byte[] content;
 		
-		private ReentrantLock lock = new ReentrantLock(true);
+		private final ReentrantLock lock = new ReentrantLock(true);
 		
 		public void lock() {
 			lock.lock();
@@ -22,38 +28,38 @@ public class UrlByteChannelCache {
 			lock.unlock();
 		}
 		
-		public void downloaded() {
-			this.downloaded = true;
+		public void downloaded(byte[] content) {
+			this.content = content;
 		}
 		
 		public boolean isDownloaded() {
-			return downloaded;
+			return content != null;
 		}
 		public boolean isLocked() {
 			return lock.isLocked();
 		}
 	}
 	
+	protected volatile int size = -1;
 	protected URL url;
-	protected byte[] data;
 	protected int chunkLength;
 	protected Part[] parts;
-	protected Semaphore connections;
+	protected Semaphore concurrentConnections;
 
 	public UrlByteChannelCache(URL url, int chunkLength) {
 		this(url, chunkLength, -1);
 	}
 
-	public UrlByteChannelCache(URL url, int chunkLength, int concurrentConnections) {
+	public UrlByteChannelCache(URL url, int chunkLength, int numberOfConcurrentConnections) {
 		this.url = url;
 		this.chunkLength = chunkLength;
-		if(concurrentConnections != -1) {
-			connections = new Semaphore(concurrentConnections);
+		if(numberOfConcurrentConnections != -1) {
+			this.concurrentConnections = new Semaphore(numberOfConcurrentConnections);
 		}
 	}
 	
-	public int getSize() throws IOException {
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+	protected int getSize() throws IOException {
+		HttpURLConnection connection = openConnection();
 		
 		connection.setRequestMethod("HEAD");
 		
@@ -65,11 +71,14 @@ public class UrlByteChannelCache {
 		}
 	}
 	
-	
-	
-    public void ensureContent(int position, int wanted) throws IOException {
+    public void ensureContentBytes(int position, int wanted) throws IOException {
     	int startIndex = position / chunkLength;
     	int endIndex = (position + wanted) / chunkLength;
+    	
+    	ensureContentIndex(startIndex, endIndex);
+    }
+	
+    public void ensureContentIndex(int startIndex, int endIndex) throws IOException {
     	
     	int length = endIndex - startIndex + 1;
     	
@@ -116,37 +125,46 @@ public class UrlByteChannelCache {
     			}
 
     			// restrict number of concurrent connections, if any
-    			if(connections != null) {
-    				connections.acquire();
+    			if(concurrentConnections != null) {
+    				concurrentConnections.acquire();
     			}
     			
     			try {
-					HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-					connection.setRequestProperty("Range", "bytes=" + (currentStartIndex * chunkLength) +"-" + (Math.min(data.length, (currentStartIndex + currentLength) * chunkLength) - 1));
+					HttpURLConnection connection = openConnection();
+					connection.setRequestProperty("Range", "bytes=" + (currentStartIndex * chunkLength) +"-" + (Math.min(size, (currentStartIndex + currentLength) * chunkLength) - 1));
 					int responseCode = connection.getResponseCode();
 					if(responseCode == 200 || responseCode == 206) {
 						InputStream inputStream = connection.getInputStream();
-						
-						int offset = currentStartIndex * chunkLength;
-						
+
+						// directly create output byte arrays on-the-go
 						byte[] buffer = new byte[4096];
 						
-						int read;
-						do {
-							read = inputStream.read(buffer);
-							if(read == -1) {
-								break;
-							}
-							System.arraycopy(buffer, 0, data, offset, read);
-							
-							offset += read;
-						} while(true);
+		        		for(int i = currentStartIndex; i < currentStartIndex + currentLength; i++) {
+		        			byte[] partContent = new byte[Math.min(chunkLength, size - currentStartIndex * chunkLength)];
+
+		        			int index = 0;
+		        			
+							int read;
+							do {
+								read = inputStream.read(buffer, 0, Math.min(partContent.length - index, buffer.length));
+								if(read == -1) {
+									break;
+								}
+								
+								System.arraycopy(buffer, 0, partContent, index, read);
+								
+								index += read;
+							} while(index < partContent.length);
+		        			
+		        			parts[i].downloaded(partContent);
+		        		}
+						
 					} else {
 						throw new IOException("Expected HTTP code 200, got " + responseCode);
 					} 
 				} finally {
-	    			if(connections != null) {
-	    				connections.release();
+	    			if(concurrentConnections != null) {
+	    				concurrentConnections.release();
 	    			}
     			}
 			} catch (InterruptedException e) {
@@ -158,21 +176,20 @@ public class UrlByteChannelCache {
         		}
     		}
 			
-			for(int i = currentStartIndex; i < currentStartIndex + currentLength; i++) {
-				parts[i].downloaded();
-			}
-			
     		currentStartIndex = currentStartIndex + currentLength;
     	} while(currentStartIndex < startIndex + length);
     	
 	}
 
+	protected HttpURLConnection openConnection() throws IOException {
+		return (HttpURLConnection) url.openConnection();
+	}
+
 	public int size() throws IOException {
-		if(data == null) {
+		if(size == -1) {
 			synchronized(this) {
-				if(data == null) {
-					int size = getSize();
-					data = new byte[size];
+				if(size == -1) {
+					size = getSize();
 					
 					int parts = size / chunkLength;
 					if(size % chunkLength != 0) {
@@ -187,11 +204,21 @@ public class UrlByteChannelCache {
 			}
 		}
 
-		return data.length;
+		return size;
 	}
 
-	public void put(ByteBuffer buf, int position, int wanted) throws IOException {
-        ensureContent(position, wanted);
-        buf.put(data, position, wanted);
+	public int put(ByteBuffer buf, int position, int wanted) throws IOException {
+    	int startIndex = position / chunkLength;
+    	int endIndex = (position + wanted) / chunkLength;
+
+        ensureContentIndex(startIndex, endIndex);
+    	
+		int offest = position - startIndex * chunkLength;
+		int length = Math.min(wanted, parts[startIndex].content.length - offest);
+		
+		buf.put(parts[startIndex].content, offest, length);
+		
+		return length;
 	}
+		
 }

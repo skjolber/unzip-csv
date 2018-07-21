@@ -15,6 +15,13 @@ public class NewLineSplitterEntryHandler implements FileEntryHandler {
 	protected final int chuckLength; // effective length depends on line lengths
 	protected final FileEntryHandler delegate;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param chuckLength number of bytes per segment
+	 * @param delegate delegate for forwarding (whole or partial) streams. 
+	 */
+	
 	public NewLineSplitterEntryHandler(int chuckLength, FileEntryHandler delegate) {
 		super();
 		this.chuckLength = chuckLength;

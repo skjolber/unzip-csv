@@ -59,10 +59,10 @@ public class UrlSeekableByteChannel implements SeekableByteChannel {
             wanted = possible;
         }
         
-        cache.put(buf, position, wanted);
+        int read = cache.put(buf, position, wanted);
     	
-        position += wanted;
-        return wanted;
+        position += read;
+        return read;
     }
 
 

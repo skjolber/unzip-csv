@@ -5,8 +5,11 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.Test;
+
 public class ZipFileTest {
 
+	@Test
 	public void testMultithread() throws IOException {
 		FileEntryHandler handler = new NewLineSplitterEntryHandler(32 * 1024 * 1024, new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory()));
 		
