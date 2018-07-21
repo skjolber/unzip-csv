@@ -24,7 +24,7 @@ Example dependency config:
 ```xml
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
-    <artifactId>unzip-csv</artifactId>
+    <artifactId>core</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
