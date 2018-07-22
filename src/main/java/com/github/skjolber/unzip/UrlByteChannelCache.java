@@ -129,38 +129,30 @@ public class UrlByteChannelCache {
     			}
     			
     			try {
-					HttpURLConnection connection = openConnection();
-					connection.setRequestProperty("Range", "bytes=" + (currentStartIndex * chunkLength) +"-" + (Math.min(size, (currentStartIndex + currentLength) * chunkLength) - 1));
-					int responseCode = connection.getResponseCode();
-					if(responseCode == 200 || responseCode == 206) {
-						InputStream inputStream = connection.getInputStream();
+					InputStream inputStream = openInputStream((currentStartIndex * chunkLength), Math.min(size, (currentStartIndex + currentLength) * chunkLength) - 1);
 
-						// directly create output byte arrays on-the-go
-						byte[] buffer = new byte[4096];
-						
-		        		for(int i = currentStartIndex; i < currentStartIndex + currentLength; i++) {
-		        			byte[] partContent = new byte[Math.min(chunkLength, size - currentStartIndex * chunkLength)];
+					// directly create output byte arrays on-the-go
+					byte[] buffer = new byte[4096];
+					
+	        		for(int i = currentStartIndex; i < currentStartIndex + currentLength; i++) {
+	        			byte[] partContent = new byte[Math.min(chunkLength, size - currentStartIndex * chunkLength)];
 
-		        			int index = 0;
-		        			
-							int read;
-							do {
-								read = inputStream.read(buffer, 0, Math.min(partContent.length - index, buffer.length));
-								if(read == -1) {
-									break;
-								}
-								
-								System.arraycopy(buffer, 0, partContent, index, read);
-								
-								index += read;
-							} while(index < partContent.length);
-		        			
-		        			parts[i].downloaded(partContent);
-		        		}
-						
-					} else {
-						throw new IOException("Expected HTTP code 200, got " + responseCode);
-					} 
+	        			int index = 0;
+	        			
+						int read;
+						do {
+							read = inputStream.read(buffer, 0, Math.min(partContent.length - index, buffer.length));
+							if(read == -1) {
+								break;
+							}
+							
+							System.arraycopy(buffer, 0, partContent, index, read);
+							
+							index += read;
+						} while(index < partContent.length);
+	        			
+	        			parts[i].downloaded(partContent);
+	        		}
 				} finally {
 	    			if(concurrentConnections != null) {
 	    				concurrentConnections.release();
@@ -182,6 +174,17 @@ public class UrlByteChannelCache {
 
 	protected HttpURLConnection openConnection() throws IOException {
 		return (HttpURLConnection) url.openConnection();
+	}
+	
+	protected InputStream openInputStream(int start, int end) throws IOException {
+		HttpURLConnection connection = openConnection();
+		connection.setRequestProperty("Range", "bytes=" + start +"-" + end);
+		int responseCode = connection.getResponseCode();
+		if(responseCode == 200 || responseCode == 206) {
+			return connection.getInputStream();		
+		} else {
+			throw new IOException("Expected HTTP code 200, got " + responseCode);
+		} 
 	}
 
 	public int size() throws IOException {

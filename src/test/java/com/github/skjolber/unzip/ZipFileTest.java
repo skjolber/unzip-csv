@@ -10,7 +10,7 @@ import org.junit.Test;
 public class ZipFileTest {
 
 	@Test
-	public void testMultithread() throws IOException {
+	public void testMultiThread() throws IOException {
 		FileEntryHandler handler = new NewLineSplitterEntryHandler(32 * 1024 * 1024, new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory()));
 		
 		File file = new File("./src/test/resources/static/rb_norway-aggregated-gtfs.zip");
@@ -26,9 +26,26 @@ public class ZipFileTest {
 			engine.close();
 		}
 		
-		System.out.println("Used " + (System.currentTimeMillis() - time) + " millis for file size " + (file.length() / (1024*1024)) + " MB");
+		System.out.println("Used " + (System.currentTimeMillis() - time) + " millis for file size " + (file.length() / (1024*1024)) + " MB for " + count + " threads");
+	}
+
+	@Test
+	public void testSingleThread() throws IOException {
+		FileEntryHandler handler = new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory());
 		
+		File file = new File("./src/test/resources/static/rb_norway-aggregated-gtfs.zip");
 		
+		System.gc();
+		long time = System.currentTimeMillis();
+		
+		ZipFileEngine engine = new ZipFileEngine(handler, 1);
+		try {
+			assertTrue(engine.handle(new FileZipFileFactory(file)));
+		} finally {
+			engine.close();
+		}
+		
+		System.out.println("Used " + (System.currentTimeMillis() - time) + " millis for file size " + (file.length() / (1024*1024)) + " MB for " + 1 + " threads");
 	}
 
 }

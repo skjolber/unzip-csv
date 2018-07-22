@@ -20,5 +20,9 @@ public class UrlZipFileFactory implements ZipFileSource {
 	public ZipFile getZipFile() throws IOException {
 		return new ZipFile(new UrlSeekableByteChannel(cache));
 	}
+	
+	public int size() throws IOException {
+		return cache.getSize();
+	}
 
 }

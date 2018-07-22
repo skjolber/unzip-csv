@@ -19,7 +19,7 @@ public class UrlSeekableByteChannel implements SeekableByteChannel {
 	}
 
 	public UrlSeekableByteChannel(URL url, int chunkLength, int concurrentConnections) {
-		cache = new UrlByteChannelCache(url, chunkLength, concurrentConnections);
+		this(new UrlByteChannelCache(url, chunkLength, concurrentConnections));
 	}
 	
     public UrlSeekableByteChannel(UrlByteChannelCache cache) {

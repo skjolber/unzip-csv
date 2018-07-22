@@ -101,4 +101,8 @@ public class ZipFileEngine implements UncaughtExceptionHandler {
 	public Throwable getUncaughtException() {
 		return uncaughtException;
 	}
+	
+	public ThreadPoolExecutor getExecutor() {
+		return executor;
+	}
 }
