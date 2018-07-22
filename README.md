@@ -76,7 +76,7 @@ void endFileCollection(String name, ThreadPoolExecutor executor);
 
 for pre- or post-processing. Call the super method wherever it exists. Notice the `ThreadPoolExecutor` which allows for queueing more work.
 ## Benchmarks
-For simple [GTFS feeds] with an archive size of approximately 70 MB, which both unzips and processes file segments in parallel (parsing the CSV file lines), the performance on my laptop (4 cores + hyperthreading) is appoximately __3x__ that of a linear unzip, from about 9 seconds to about 3 seconds. 
+For simple [GTFS feeds] with an archive size of approximately 70 MB, which both unzips and processes file segments in parallel (parsing the CSV file lines), the performance on my laptop (4 cores + hyperthreading) is appoximately 1.5x-2x that of a linear unzip. 
 
 Depending on your scenario, the the effect of processing file segments in parallel might be a considerable speedup, improving on the above result.
 
