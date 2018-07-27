@@ -2,13 +2,20 @@ package com.github.skjolber.unzip.csv;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.unzip.csv.CsvLineHandler;
+
+/**
+ * Handler cache which limits creating new handlers to one per thread.
+ *
+ */
 
 public class PerThreadCsvFileEntryHandlerFactory implements CsvLineHandlerFactory {
 
@@ -38,20 +45,30 @@ public class PerThreadCsvFileEntryHandlerFactory implements CsvLineHandlerFactor
 		return csvLineHandler;
 	}
 
-	public Map<String, List<CsvLineHandler>> getHandlers() {
-		Map<String, List<CsvLineHandler>> result = new HashMap<>();
+	public Set<String> getFileNames() {
+		Set<String> result = new HashSet<>();
 		
 		for (Entry<Thread, Map<String, CsvLineHandler>> threadEntry : handlers.entrySet()) {
 			for (Entry<String, CsvLineHandler> fileEntity: threadEntry.getValue().entrySet()) {
-				List<CsvLineHandler> list = result.get(fileEntity.getKey());
-				if(list == null) {
-					list = new ArrayList<>();
-					result.put(fileEntity.getKey(), list);
-				}
-				list.add(fileEntity.getValue());
+				result.add(fileEntity.getKey());
 			}
 		}
 		
 		return result;
 	}
+	
+	public List<CsvLineHandler> getHandlers(String fileName) {
+		List<CsvLineHandler> list = new ArrayList<>();
+		
+		for (Entry<Thread, Map<String, CsvLineHandler>> threadEntry : handlers.entrySet()) {
+			for (Entry<String, CsvLineHandler> fileEntity: threadEntry.getValue().entrySet()) {
+				if(fileEntity.getKey().equals(fileName)) {
+					list.add(fileEntity.getValue());
+				}
+			}
+		}
+		
+		return list;
+	}
+
 }

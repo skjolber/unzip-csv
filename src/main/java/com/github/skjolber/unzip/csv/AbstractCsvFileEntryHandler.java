@@ -84,17 +84,23 @@ public abstract class AbstractCsvFileEntryHandler implements FileEntryHandler {
 			this.headers.put(name, header);
 		}
 		
-		if(consume) {
-			final FileEntryState fileEntryState = parts.get(name);
-			fileEntryState.increment();
-
-			handle(name, reader, header, executor);
-
-			fileEntryState.decrement();
-			
-			notifyEndFileEntry(name, fileEntryState, executor);
+		// get the handler here so it is possible to maintain order within a handler factory (for the same file), if desired
+		CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
+		if(csvLineHandler != null) {
+			if(consume) {
+				final FileEntryState fileEntryState = parts.get(name);
+				fileEntryState.increment();
+	
+				handle(csvLineHandler, name, reader, header, executor);
+	
+				fileEntryState.decrement();
+				
+				notifyEndFileEntry(name, fileEntryState, executor);
+			} else {
+				execute(csvLineHandler, name, reader, header, executor);
+			}
 		} else {
-			execute(name, reader, header, executor);
+			// ignore
 		}
 	}
 
@@ -154,7 +160,7 @@ public abstract class AbstractCsvFileEntryHandler implements FileEntryHandler {
 
 	protected abstract void endFileEntryProcessing(String name, ThreadPoolExecutor executor);
 
-	public void execute(String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws Exception {
+	public void execute(CsvLineHandler csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws Exception {
 		final FileEntryState fileEntryState = parts.get(name);
 		
 		fileEntryState.increment();
@@ -162,7 +168,7 @@ public abstract class AbstractCsvFileEntryHandler implements FileEntryHandler {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					handle(name, reader, names, executor);
+					handle(csvLineHandler, name, reader, names, executor);
 					
 					fileEntryState.decrement();
 					
@@ -174,9 +180,7 @@ public abstract class AbstractCsvFileEntryHandler implements FileEntryHandler {
 		});
 	}
 	
-	public void handle(String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {
-		CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
-		
+	public void handle(CsvLineHandler csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
 		Map<String, String> fields = new HashMap<>(256);
 		
 		try {
