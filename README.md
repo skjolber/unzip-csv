@@ -8,7 +8,7 @@ Projects using this library will benefit from:
  * per-file adapters (based on file-name)
  * hooks for pre- and post-processing 
  * cutting large files into segments for further parallel processing 
- * unzip remote files (with HTTP Range)
+ * unzip specific files over-the-wire (with HTTP Range)
    * parallel, on-demand download
    * extract specific files without downloading the full archive
 
