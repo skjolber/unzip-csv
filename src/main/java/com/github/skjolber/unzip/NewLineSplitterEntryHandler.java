@@ -10,10 +10,10 @@ import java.util.concurrent.ThreadPoolExecutor;
  * 
  */
 
-public class NewLineSplitterEntryHandler implements FileEntryHandler {
+public class NewLineSplitterEntryHandler implements NewLineSplitterFileEntryHandler {
 
 	protected final int chuckLength; // effective length depends on line lengths
-	protected final FileEntryHandler delegate;
+	protected final NewLineSplitterFileEntryHandler delegate;
 	
 	/**
 	 * Constructor.
@@ -22,14 +22,14 @@ public class NewLineSplitterEntryHandler implements FileEntryHandler {
 	 * @param delegate delegate for forwarding (whole or partial) streams. 
 	 */
 	
-	public NewLineSplitterEntryHandler(int chuckLength, FileEntryHandler delegate) {
+	public NewLineSplitterEntryHandler(int chuckLength, NewLineSplitterFileEntryHandler delegate) {
 		super();
 		this.chuckLength = chuckLength;
 		this.delegate = delegate;
 	}
 
 	public void handle(final String name, long size, InputStream in, final ThreadPoolExecutor executor, boolean consume) throws Exception {
-		if(size > chuckLength) {
+		if(size > chuckLength && delegate.shouldSplit(name, size)) {
 			byte[] buffer = new byte[Math.min(8192 * 16, chuckLength)];
 
 			ByteArrayOutputStream bout = new ByteArrayOutputStream(chuckLength);
@@ -104,6 +104,11 @@ public class NewLineSplitterEntryHandler implements FileEntryHandler {
 	@Override
 	public void endFileCollection(String name, ThreadPoolExecutor executor) {
 		delegate.endFileCollection(name, executor);
+	}
+
+	@Override
+	public boolean shouldSplit(String name, long size) {
+		return true;
 	}
 	
 }

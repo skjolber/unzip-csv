@@ -38,4 +38,9 @@ public class TestCsvFileEntryHandler extends AbstractCsvFileEntryHandler {
 		System.out.println("End zip file");
 	}
 
+	@Override
+	public boolean shouldSplit(String name, long size) {
+		return true;
+	}
+
 }

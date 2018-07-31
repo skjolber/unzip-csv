@@ -11,6 +11,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.skjolber.unzip.FileEntryHandler;
+import com.github.skjolber.unzip.NewLineSplitterFileEntryHandler;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
@@ -20,7 +21,7 @@ import com.univocity.parsers.csv.CsvParserSettings;
  * 
  */
 
-public abstract class AbstractCsvFileEntryHandler implements FileEntryHandler {
+public abstract class AbstractCsvFileEntryHandler implements NewLineSplitterFileEntryHandler {
 
 	protected static class FileEntryState {
 		private AtomicInteger count = new AtomicInteger(0);
