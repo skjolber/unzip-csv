@@ -29,7 +29,7 @@ public class NewLineSplitterEntryHandler implements NewLineSplitterFileEntryHand
 	}
 
 	public void handle(final String name, long size, InputStream in, final ThreadPoolExecutor executor, boolean consume) throws Exception {
-		if(size > chuckLength && delegate.shouldSplit(name, size)) {
+		if(size > chuckLength && delegate.splitFileEntry(name, size)) {
 			byte[] buffer = new byte[Math.min(8192 * 16, chuckLength)];
 
 			ByteArrayOutputStream bout = new ByteArrayOutputStream(chuckLength);
@@ -107,7 +107,7 @@ public class NewLineSplitterEntryHandler implements NewLineSplitterFileEntryHand
 	}
 
 	@Override
-	public boolean shouldSplit(String name, long size) {
+	public boolean splitFileEntry(String name, long size) {
 		return true;
 	}
 	

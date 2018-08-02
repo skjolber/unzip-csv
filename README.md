@@ -72,6 +72,7 @@ void beginFileCollection(String name);
 void beginFileEntry(String name);
 void endFileEntry(String name, ThreadPoolExecutor executor);
 void endFileCollection(String name, ThreadPoolExecutor executor);
+boolean splitFileEntry(final String name, long size);
 ```
 
 for pre- or post-processing. Call the super method wherever it exists. Notice the `ThreadPoolExecutor` which allows for queueing more work.

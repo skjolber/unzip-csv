@@ -39,7 +39,7 @@ public class TestCsvFileEntryHandler extends AbstractCsvFileEntryHandler {
 	}
 
 	@Override
-	public boolean shouldSplit(String name, long size) {
+	public boolean splitFileEntry(String name, long size) {
 		return true;
 	}
 
