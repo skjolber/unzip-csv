@@ -12,7 +12,7 @@ Projects using this library will benefit from:
    * parallel, on-demand download
    * extract specific files without downloading the full archive
 
-Cutting files into segments (based on newline) assumes that line order is not important.
+Cutting files into segments (based on newline) assumes that line order is not important, and that newlines can be decoded from reading the file backwards - this is true for popular character encodings like [UTF-8], ASCII and ISO-8859-1. 
  
 Bugs, feature suggestions and help requests can be filed with the [issue-tracker].
 
@@ -72,7 +72,7 @@ void beginFileCollection(String name);
 void beginFileEntry(String name);
 void endFileEntry(String name, ThreadPoolExecutor executor);
 void endFileCollection(String name, ThreadPoolExecutor executor);
-boolean splitFileEntry(final String name, long size);
+boolean splitFileEntry(final String name, long size); // decide whether to split this file on newline 
 ```
 
 for pre- or post-processing. Call the super method wherever it exists. Notice the `ThreadPoolExecutor` which allows for queueing more work.
@@ -94,7 +94,8 @@ Feel free to connect with me on [LinkedIn], see also my [Github page].
 [GTFS feeds]:			https://www.entur.org/dev/rutedata/
 [Apache 2.0]: 			http://www.apache.org/licenses/LICENSE-2.0.html
 [issue-tracker]:		https://github.com/skjolber/unzip-csv/issues
-[Maven]:			    http://maven.apache.org/
-[LinkedIn]:			    http://lnkd.in/r7PWDz
+[Maven]:			http://maven.apache.org/
+[LinkedIn]:			http://lnkd.in/r7PWDz
 [Github page]:			https://skjolber.github.io
 [1.0.0]:		    	https://github.com/skjolber/unzip-csv/releases
+[UTF-8]:			https://stackoverflow.com/questions/22257486/iterate-backwards-through-a-utf8-multibyte-string
