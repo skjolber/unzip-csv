@@ -12,8 +12,12 @@ Projects using this library will benefit from:
    * parallel, on-demand download
    * extract specific files without downloading the full archive
 
-Cutting files into segments (based on newline) assumes that line order is not important, and that newlines can be decoded from reading the file backwards - this is true for popular character encodings like [UTF-8], ASCII and ISO-8859-1. 
- 
+Cutting files into segments (based on newline) assumes that 
+
+ * line order is not important,
+ * newlines can be decoded from reading the file backwards - this is true for popular character encodings like [UTF-8], ASCII and ISO-8859-1. 
+ * CSV entries are without linebreaks; not even linebreak wrapped in quotes.
+
 Bugs, feature suggestions and help requests can be filed with the [issue-tracker].
 
 ## Obtain
