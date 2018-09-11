@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.skjolber.unzip-csv</groupId>
-	<artifactId>core</artifactId>
+	<artifactId>unzip-csv</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 
 	<name>unzip-csv</name>
@@ -59,7 +59,7 @@
 		<commons-io.version>2.6</commons-io.version>
 
 		<!-- test -->		
-		<junit.version>4.12</junit.version>
+		<junit.version>5.2.0</junit.version>
 		<spring.version>2.0.3.RELEASE</spring.version>
 
 		<!-- plugins -->
@@ -76,7 +76,7 @@
 		<maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
 		<maven-shade-plugin.version>3.1.1</maven-shade-plugin.version>
 		<maven-war-plugin.version>3.2.2</maven-war-plugin.version>
-		<owasp-dependency-check.version>3.1.1</owasp-dependency-check.version>
+		<owasp-dependency-check.version>3.2.1</owasp-dependency-check.version>
 
 	</properties>
 
@@ -109,8 +109,14 @@
 			<scope>test</scope>
 		</dependency>		
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>

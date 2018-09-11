@@ -5,21 +5,14 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.URL;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.github.skjolber.unzip.FileEntryHandler;
-import com.github.skjolber.unzip.NewLineSplitterEntryHandler;
-import com.github.skjolber.unzip.NoopCsvLineHandlerFactory;
-import com.github.skjolber.unzip.TestCsvFileEntryHandler;
-import com.github.skjolber.unzip.UrlZipFileFactory;
-import com.github.skjolber.unzip.ZipFileEngine;
-
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UrlZipFileFactoryTest {
 
@@ -45,7 +38,7 @@ public class UrlZipFileFactoryTest {
 	}
 	
 	@Test
-	@Ignore
+	@Disabled
 	public void testRemoteMultiThread() throws IOException {
 		long time = System.currentTimeMillis();
 
@@ -67,7 +60,7 @@ public class UrlZipFileFactoryTest {
 	}
 
 	@Test
-	@Ignore
+	@Disabled  
 	public void testRemoteSingleThread() throws IOException {
 		long time = System.currentTimeMillis();
 
