@@ -29,7 +29,7 @@ Example dependency config:
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -98,8 +98,8 @@ Feel free to connect with me on [LinkedIn], see also my [Github page].
 [GTFS feeds]:			https://www.entur.org/dev/rutedata/
 [Apache 2.0]: 			http://www.apache.org/licenses/LICENSE-2.0.html
 [issue-tracker]:		https://github.com/skjolber/unzip-csv/issues
-[Maven]:			http://maven.apache.org/
-[LinkedIn]:			http://lnkd.in/r7PWDz
+[Maven]:				http://maven.apache.org/
+[LinkedIn]:				http://lnkd.in/r7PWDz
 [Github page]:			https://skjolber.github.io
 [1.0.0]:		    	https://github.com/skjolber/unzip-csv/releases
-[UTF-8]:			https://stackoverflow.com/questions/22257486/iterate-backwards-through-a-utf8-multibyte-string
+[UTF-8]:				https://stackoverflow.com/questions/22257486/iterate-backwards-through-a-utf8-multibyte-string
