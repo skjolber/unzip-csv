@@ -29,7 +29,7 @@ Example dependency config:
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -76,7 +76,7 @@ void beginFileCollection(String name);
 void beginFileEntry(String name);
 void endFileEntry(String name, ThreadPoolExecutor executor);
 void endFileCollection(String name, ThreadPoolExecutor executor);
-boolean splitFileEntry(final String name, long size); // decide whether to split this file on newline 
+FileChunkSplitter splitFileEntry(final String name, long size); // decide whether to split this file on newline 
 ```
 
 for pre- or post-processing. Call the super method wherever it exists. Notice the `ThreadPoolExecutor` which allows for queueing more work.
@@ -93,6 +93,7 @@ Feel free to connect with me on [LinkedIn], see also my [Github page].
 [Apache 2.0]
 
 # History
+ - [1.0.1]: Add support for customized file chunk splitter.
  - [1.0.0]: Initial release.
 
 [GTFS feeds]:			https://www.entur.org/dev/rutedata/
@@ -101,5 +102,5 @@ Feel free to connect with me on [LinkedIn], see also my [Github page].
 [Maven]:				http://maven.apache.org/
 [LinkedIn]:				http://lnkd.in/r7PWDz
 [Github page]:			https://skjolber.github.io
-[1.0.0]:		    	https://github.com/skjolber/unzip-csv/releases
+[1.0.1]:		    	https://github.com/skjolber/unzip-csv/releases
 [UTF-8]:				https://stackoverflow.com/questions/22257486/iterate-backwards-through-a-utf8-multibyte-string

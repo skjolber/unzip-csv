@@ -27,7 +27,7 @@ public class UrlZipFileFactoryTest {
 
 		UrlZipFileFactory f = new UrlZipFileFactory(url, 1024*256, count);
 		
-		FileEntryHandler handler = new NewLineSplitterEntryHandler(1 * 1024 * 1024, new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory()));
+		FileEntryHandler handler = new ChunkSplitterFileEntryHandler(1 * 1024 * 1024, new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory()));
 
 		ZipFileEngine engine = new ZipFileEngine(handler, count);
 		try {
@@ -48,7 +48,7 @@ public class UrlZipFileFactoryTest {
 
 		UrlZipFileFactory f = new UrlZipFileFactory(url, 4 * 1024*1024, count);
 		
-		FileEntryHandler handler = new NewLineSplitterEntryHandler(32 * 1024 * 1024, new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory()));
+		FileEntryHandler handler = new ChunkSplitterFileEntryHandler(32 * 1024 * 1024, new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory()));
 
 		ZipFileEngine engine = new ZipFileEngine(handler, count);
 		try {

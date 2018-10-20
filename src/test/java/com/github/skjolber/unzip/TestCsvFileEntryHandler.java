@@ -3,9 +3,10 @@ package com.github.skjolber.unzip;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.unzip.csv.AbstractCsvFileEntryHandler;
+import com.github.skjolber.unzip.csv.AbstractUnivocityCsvFileEntryHandler;
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
 
-public class TestCsvFileEntryHandler extends AbstractCsvFileEntryHandler {
+public class TestCsvFileEntryHandler extends AbstractUnivocityCsvFileEntryHandler {
 
 	public TestCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
 		super(csvLineHandlerFactory);
@@ -39,8 +40,10 @@ public class TestCsvFileEntryHandler extends AbstractCsvFileEntryHandler {
 	}
 
 	@Override
-	public boolean splitFileEntry(String name, long size) {
-		return true;
+	public FileChunkSplitter splitFileEntry(String name, long size) {
+		return new NewlineChunkSplitter();
 	}
+
+
 
 }

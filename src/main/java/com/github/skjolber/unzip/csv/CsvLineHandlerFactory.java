@@ -2,7 +2,7 @@ package com.github.skjolber.unzip.csv;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
-public interface CsvLineHandlerFactory {
+public interface CsvLineHandlerFactory<T> {
 	
 	/**
 	 * Return a handler for the file name. 
@@ -12,6 +12,6 @@ public interface CsvLineHandlerFactory {
 	 * @return the line handler, null if none (ignored)
 	 */
 
-	CsvLineHandler getHandler(String fileName, ThreadPoolExecutor executor);
+	CsvLineHandler<T> getHandler(String fileName, ThreadPoolExecutor executor);
 
 }
