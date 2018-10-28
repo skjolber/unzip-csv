@@ -9,9 +9,10 @@ public interface CsvLineHandlerFactory {
 	 * 
 	 * @param fileName file name
 	 * @param executor for queuing additional work
+	 * @param <T> the expected type of object returned per line
 	 * @return the line handler, null if none (ignored)
 	 */
 
-	CsvLineHandler getHandler(String fileName, ThreadPoolExecutor executor);
+	<T> CsvLineHandler<T> getHandler(String fileName, ThreadPoolExecutor executor);
 
 }

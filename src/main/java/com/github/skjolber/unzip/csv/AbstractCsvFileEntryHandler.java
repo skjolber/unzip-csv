@@ -1,19 +1,14 @@
-package com.github.skjolber.unzip.csv;
+	package com.github.skjolber.unzip.csv;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.skjolber.unzip.ChunkedFileEntryHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
-import com.github.skjolber.unzip.NewLineSplitterFileEntryHandler;
-import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
 
 /**
  * 
@@ -21,7 +16,7 @@ import com.univocity.parsers.csv.CsvParserSettings;
  * 
  */
 
-public abstract class AbstractCsvFileEntryHandler implements NewLineSplitterFileEntryHandler {
+public abstract class AbstractCsvFileEntryHandler<T> implements ChunkedFileEntryHandler {
 
 	protected static class FileEntryState {
 		private AtomicInteger count = new AtomicInteger(0);
@@ -58,80 +53,12 @@ public abstract class AbstractCsvFileEntryHandler implements NewLineSplitterFile
 		
 	}
 
-	protected Map<String, String[]> headers = new ConcurrentHashMap<>();
-	
 	protected Map<String, FileEntryState> parts = Collections.synchronizedMap(new HashMap<>());
-	
-	protected CsvLineHandlerFactory csvLineHandlerFactory;
-	
-	public AbstractCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
-		this.csvLineHandlerFactory = csvLineHandlerFactory;
-	}
 	
 	public AbstractCsvFileEntryHandler() {
 	}
 
-	public void handle(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
-		CsvParser reader = createCsvParser(in);
-		
-		String[] header = this.headers.get(name);
-		if(header == null) {
-			header = reader.parseNext();
-			for(int i = 0; i < header.length; i++) {
-				if(header[i] != null && header[i].trim().isEmpty()) {
-					header[i] = null;
-				}
-			}
-			this.headers.put(name, header);
-		}
-		
-		// get the handler here so it is possible to maintain order within a handler factory (for the same file), if desired
-		CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
-		if(csvLineHandler != null) {
-			if(consume) {
-				final FileEntryState fileEntryState = parts.get(name);
-				fileEntryState.increment();
-	
-				handle(csvLineHandler, name, reader, header, executor);
-	
-				fileEntryState.decrement();
-				
-				notifyEndFileEntry(name, fileEntryState, executor);
-			} else {
-				execute(csvLineHandler, name, reader, header, executor);
-			}
-		} else {
-			// ignore
-		}
-	}
-
-	/**
-	 * Override this method to customize parser
-	 * 
-	 * @return parser settings
-	 */
-
-	protected CsvParser createCsvParser(InputStream in) {
-		CsvParserSettings settings = createCsvParserSettings();
-		
-		CsvParser parser = new CsvParser(settings);
-		
-		parser.beginParsing(in, StandardCharsets.UTF_8);
-		
-		return parser;
-	}
-	
-	/**
-	 * Override this method to customize parser settings
-	 * 
-	 * @return parser settings
-	 */
-
-	protected CsvParserSettings createCsvParserSettings() {
-		CsvParserSettings settings = new CsvParserSettings();
-		settings.getFormat().setLineSeparator("\n");
-		return settings;
-	}
+	public abstract void handle(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception;
 
 	@Override
 	public void endFileEntry(String name, ThreadPoolExecutor executor) {
@@ -156,69 +83,11 @@ public abstract class AbstractCsvFileEntryHandler implements NewLineSplitterFile
 	 * Notify when processing is performed
 	 * 
 	 * @param name name of file processed
-	 * @param executor 
+	 * @param executor thread pool executor (for queuing additional post-processing)
 	 */
 
 	protected abstract void endFileEntryProcessing(String name, ThreadPoolExecutor executor);
 
-	public void execute(CsvLineHandler csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws Exception {
-		final FileEntryState fileEntryState = parts.get(name);
-		
-		fileEntryState.increment();
-		
-		executor.execute(new Runnable() {
-			public void run() {
-				try {
-					handle(csvLineHandler, name, reader, names, executor);
-					
-					fileEntryState.decrement();
-					
-					notifyEndFileEntry(name, fileEntryState, executor);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-		});
-	}
-	
-	public void handle(CsvLineHandler csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
-		Map<String, String> fields = new HashMap<>(256);
-		
-		try {
-			do {
-				String[] line = reader.parseNext();
-				if(line == null) {
-					break;
-				}
-
-				for (int i = 0; i < line.length; i++) {
-					String string = line[i];
-					if(string != null && !string.isEmpty()) {
-						fields.put(names[i], string);
-					}
-				}
-				if(!fields.isEmpty()) {
-					csvLineHandler.handleLine(fields);
-					
-					fields.clear();
-				}
-			} while(true);
-		} finally {
-			reader.stopParsing();
-		}		
-	}
-
-	public String[] get(String key) {
-		return headers.get(key);
-	}
-
-	public String[] put(String key, String[] value) {
-		return headers.put(key, value);
-	}
-
-	public String[] remove(Object key) {
-		return headers.remove(key);
-	}
 
 	@Override
 	public void beginFileEntry(String name) {

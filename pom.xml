@@ -52,13 +52,14 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 
-		<univocity-parsers.version>2.7.1</univocity-parsers.version>
-		<commons-compress.version>1.17</commons-compress.version>
+		<univocity-parsers.version>2.7.6</univocity-parsers.version>
+		<commons-compress.version>1.18</commons-compress.version>
 		<commons-io.version>2.6</commons-io.version>
-
+		<sesseltjonna-csv.version>1.0.1</sesseltjonna-csv.version>
+		
 		<!-- test -->		
-		<junit.version>5.2.0</junit.version>
-		<spring.version>2.0.3.RELEASE</spring.version>
+		<junit.version>5.3.1</junit.version>
+		<spring.version>2.0.6.RELEASE</spring.version>
 
 		<!-- plugins -->
 		<build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
@@ -83,6 +84,13 @@
 			<groupId>com.univocity</groupId>
 			<artifactId>univocity-parsers</artifactId>
 			<version>${univocity-parsers.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+		    <groupId>com.github.skjolber.sesseltjonna-csv</groupId>
+		    <artifactId>sesseltjonna-csv</artifactId>
+		    <version>${sesseltjonna-csv.version}</version>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>

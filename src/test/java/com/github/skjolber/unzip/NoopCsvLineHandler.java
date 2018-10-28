@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.github.skjolber.unzip.csv.CsvLineHandler;
 
-public class NoopCsvLineHandler implements CsvLineHandler {
+public class NoopCsvLineHandler implements CsvLineHandler<Map<String, String>> {
 
 	@Override
 	public void handleLine(Map<String, String> fields) {
