@@ -126,7 +126,7 @@ public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFi
 	}
 	
 	
-	public void execute(CsvLineHandler<Map<String, String>> csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws Exception {
+	public void execute(CsvLineHandler<Map<String, String>> csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) {
 		final FileEntryState fileEntryState = parts.get(name);
 		
 		fileEntryState.increment();

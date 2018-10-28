@@ -72,8 +72,6 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends Abstrac
 			} else {
 				execute(csvLineHandler, name, csvReader, executor);
 			}
-		} else {
-			// ignore
 		}
 	}
 	
