@@ -1,4 +1,4 @@
-package com.github.skjolber.unzip.csv;
+	package com.github.skjolber.unzip.csv;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -54,12 +54,6 @@ public abstract class AbstractCsvFileEntryHandler<T> implements ChunkedFileEntry
 	}
 
 	protected Map<String, FileEntryState> parts = Collections.synchronizedMap(new HashMap<>());
-	
-	protected CsvLineHandlerFactory<T> csvLineHandlerFactory;
-	
-	public AbstractCsvFileEntryHandler(CsvLineHandlerFactory<T> csvLineHandlerFactory) {
-		this.csvLineHandlerFactory = csvLineHandlerFactory;
-	}
 	
 	public AbstractCsvFileEntryHandler() {
 	}

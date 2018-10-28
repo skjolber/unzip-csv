@@ -1,9 +1,11 @@
 package com.github.skjolber.unzip;
 
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.unzip.csv.AbstractCsvFileEntryHandler;
 import com.github.skjolber.unzip.csv.AbstractUnivocityCsvFileEntryHandler;
+import com.github.skjolber.unzip.csv.CsvLineHandler;
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
 
 public class TestCsvFileEntryHandler extends AbstractUnivocityCsvFileEntryHandler {
@@ -42,6 +44,13 @@ public class TestCsvFileEntryHandler extends AbstractUnivocityCsvFileEntryHandle
 	@Override
 	public FileChunkSplitter splitFileEntry(String name, long size) {
 		return new NewlineChunkSplitter();
+	}
+
+	@Override
+	protected void notifyEndHandler(CsvLineHandler<Map<String, String>> csvLineHandler, String name,
+			ThreadPoolExecutor executor) {
+		// TODO Auto-generated method stub
+		
 	}
 
 

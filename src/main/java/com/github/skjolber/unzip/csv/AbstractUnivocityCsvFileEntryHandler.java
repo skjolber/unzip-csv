@@ -21,9 +21,10 @@ import com.univocity.parsers.csv.CsvParserSettings;
 public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFileEntryHandler<Map<String, String>> {
 
 	protected Map<String, String[]> headers = new ConcurrentHashMap<>();
-	
-	public AbstractUnivocityCsvFileEntryHandler(CsvLineHandlerFactory<Map<String, String>> csvLineHandlerFactory) {
-		super(csvLineHandlerFactory);
+	protected CsvLineHandlerFactory csvLineHandlerFactory;
+
+	public AbstractUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
+		this.csvLineHandlerFactory = csvLineHandlerFactory;
 	}
 	
 	public AbstractUnivocityCsvFileEntryHandler() {
@@ -44,7 +45,7 @@ public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFi
 		}
 		
 		// get the handler here so it is possible to maintain order within a handler factory (for the same file), if desired
-		CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
+		CsvLineHandler<Map<String, String>> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
 		if(csvLineHandler != null) {
 			if(consume) {
 				final FileEntryState fileEntryState = parts.get(name);
@@ -55,6 +56,9 @@ public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFi
 				fileEntryState.decrement();
 				
 				notifyEndFileEntry(name, fileEntryState, executor);
+				
+				notifyEndHandler(csvLineHandler, name, executor);
+				
 			} else {
 				execute(csvLineHandler, name, reader, header, executor);
 			}
@@ -62,6 +66,8 @@ public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFi
 			// ignore
 		}
 	}
+
+	protected abstract void notifyEndHandler(CsvLineHandler<Map<String, String>> csvLineHandler, String name, ThreadPoolExecutor executor);
 
 	/**
 	 * Create parser
@@ -92,7 +98,7 @@ public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFi
 		return settings;
 	}
 	
-	public void handle(CsvLineHandler csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
+	public void handle(CsvLineHandler<Map<String, String>> csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
 		Map<String, String> fields = new HashMap<>(256);
 		
 		try {
@@ -120,7 +126,7 @@ public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFi
 	}
 	
 	
-	public void execute(CsvLineHandler csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws Exception {
+	public void execute(CsvLineHandler<Map<String, String>> csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws Exception {
 		final FileEntryState fileEntryState = parts.get(name);
 		
 		fileEntryState.increment();
@@ -133,6 +139,8 @@ public abstract class AbstractUnivocityCsvFileEntryHandler extends AbstractCsvFi
 					fileEntryState.decrement();
 					
 					notifyEndFileEntry(name, fileEntryState, executor);
+					
+					notifyEndHandler(csvLineHandler, name, executor);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
