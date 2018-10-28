@@ -50,7 +50,7 @@ where the default thread count is one per core. Optionally wrap your handler in 
 Implement the abstract method
 
 ```java
-protected CsvLineHandler getHandler(String fileName, ThreadPoolExecutor executor) {
+protected CsvLineHandler<T> getHandler(String fileName, ThreadPoolExecutor executor) {
 ```
 
 to return a specific implementation of `CsvLineHandler` for each file name. 
@@ -58,7 +58,7 @@ to return a specific implementation of `CsvLineHandler` for each file name.
 ### CsvLineHandler
 This is a simple interface for handling lines:
 ```java
-void handleLine(Map<String, String> fields);
+void handleLine(T line);
 ```
 
 # Details
