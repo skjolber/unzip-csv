@@ -17,7 +17,7 @@ import com.github.skjolber.unzip.csv.CsvLineHandler;
  *
  */
 
-public class PerThreadCsvFileEntryHandlerFactory<T> implements CsvLineHandlerFactory {
+public class PerThreadCsvFileEntryHandlerFactory implements CsvLineHandlerFactory {
 
 	protected Map<Thread, Map<String, CsvLineHandler<?>>> handlers = new ConcurrentHashMap<>();
 
