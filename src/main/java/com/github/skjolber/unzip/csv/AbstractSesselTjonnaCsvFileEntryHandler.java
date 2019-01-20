@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import com.github.skjolber.stcsv.AbstractCsvMapper;
+import com.github.skjolber.stcsv.AbstractCsvReader;
+import com.github.skjolber.stcsv.CsvMapper2;
 import com.github.skjolber.stcsv.CsvReader;
-import com.github.skjolber.stcsv.CsvReaderConstructor;
 import com.github.skjolber.unzip.FileEntryHandler;
 
 /**
@@ -17,10 +19,9 @@ import com.github.skjolber.unzip.FileEntryHandler;
  * 
  */
 
-public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends AbstractCsvFileEntryHandler<T> {
-
-	protected Map<String, CsvReaderConstructor<T>> constructors = new ConcurrentHashMap<>();
-	protected CsvLineHandlerFactory csvLineHandlerFactory;
+public abstract class AbstractSesselTjonnaCsvFileEntryHandler extends AbstractCsvFileEntryHandler {
+	
+	protected Map<String, H> constructors = new ConcurrentHashMap<>();
 	
 	public AbstractSesselTjonnaCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
 		this.csvLineHandlerFactory = csvLineHandlerFactory;
@@ -30,10 +31,15 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends Abstrac
 	}
 
 	public void handle(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
-		
+		// loose coupling between factory and parser
+		handleImpl(name, size, in, executor, consume);
+	}
+	
+	protected <T> void handleImpl(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
+
 		Reader reader = new InputStreamReader(in);
-		
-		CsvReaderConstructor<T> mapper = constructors.get(name);
+
+		H mapper = constructors.get(name);
 		if(mapper == null) {
 			StringBuilder builder = new StringBuilder();
 			
@@ -50,10 +56,12 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends Abstrac
 				builder.append((char)read);
 			} while(true);
 			
-			mapper = getReaderConstructor(builder.toString(), name);
+			//boolean carriageReturn = builder.charAt(builder.length() - 1) == '\r';
+			
+			mapper = getCsvMapper(name, builder.toString());
 		}
 
-		CsvReader<T> csvReader = mapper.newInstance(reader);
+		AbstractCsvReader<? extends T> csvReader = mapper.newInstance(reader);
 		
 		// get the handler here so it is possible to maintain order within a handler factory (for the same file), if desired
 		CsvLineHandler<T> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
@@ -75,20 +83,14 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends Abstrac
 		}
 	}
 	
-	protected abstract CsvReaderConstructor<T> getReaderConstructor(String header, String name);
+	protected abstract H getCsvMapper(String name, String string);
 
-	public void handle(CsvLineHandler<T> csvLineHandler, String name, CsvReader<T> reader, ThreadPoolExecutor executor) throws Exception {		
-		do {
-			T line = reader.next();
-			if(line == null) {
-				break;
-			}
+	protected abstract <T> CsvReaderConstructor<T> getReaderConstructor(String header, String name);
 
-			csvLineHandler.handleLine(line);
-		} while(true);
-	}
+	protected abstract void handle(CsvReader<? extends T> reader, ThreadPoolExecutor executor) throws Exception;
 	
-	public void execute(CsvLineHandler<T> csvLineHandler, String name, CsvReader<T> reader, ThreadPoolExecutor executor) throws Exception {
+	
+	public <T> void execute(CsvLineHandler<T> csvLineHandler, String name, CsvReader<? extends T> reader, ThreadPoolExecutor executor) throws Exception {
 		final FileEntryState fileEntryState = parts.get(name);
 		
 		fileEntryState.increment();
@@ -115,7 +117,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends Abstrac
 		parts.put(name, new FileEntryState());
 	}
 	
-	protected abstract void notifyEndHandler(CsvLineHandler<T> csvLineHandler, String name, ThreadPoolExecutor executor);
+	protected abstract void notifyEndHandler(CsvLineHandler<?> csvLineHandler, String name, ThreadPoolExecutor executor);
 
 }
 
