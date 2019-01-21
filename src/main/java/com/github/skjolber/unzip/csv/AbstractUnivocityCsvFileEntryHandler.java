@@ -11,7 +11,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.unzip.ChunkedFileEntryHandler;
 import com.github.skjolber.unzip.FileChunkSplitter;
+import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
+import com.github.skjolber.unzip.FileEntryStreamHandler;
 import com.github.skjolber.unzip.NewlineChunkSplitter;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
@@ -22,30 +24,104 @@ import com.univocity.parsers.csv.CsvParserSettings;
  * 
  */
 
-public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHandler {
+public class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHandler {
+
+	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
+
+		private String name;
+		
+		@Override
+		public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
+			CsvParser reader = createCsvParser(in);
+			
+			String[] header = reader.parseNext();
+			for(int i = 0; i < header.length; i++) {
+				if(header[i] != null && header[i].trim().isEmpty()) {
+					header[i] = null;
+				}
+			}
+			
+			CsvLineHandler<Map<String, String>> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
+			if(csvLineHandler != null) {
+				AbstractUnivocityCsvFileEntryHandler.this.handle(csvLineHandler, reader, header, executor);
+			} else {
+				// ignore
+			}
+		}
+		
+	}
+
+	protected class CsvFileEntryChunkStreamHandler implements FileEntryChunkStreamHandler {
+
+		private String name;
+		private String[] headers;
+		
+		@Override
+		public FileChunkSplitter getFileChunkSplitter() {
+			return null;
+		}
+
+		@Override
+		public void initialize(InputStream in, ThreadPoolExecutor executor) throws Exception {
+			CsvParser reader = AbstractUnivocityCsvFileEntryHandler.this.createCsvParser(new ByteArrayInputStream(getFirstLine(in).toByteArray()));
+			try {
+				String[] header = reader.parseNext();
+				for(int i = 0; i < header.length; i++) {
+					if(header[i] != null && header[i].trim().isEmpty()) {
+						header[i] = null;
+					}
+				}
+				this.headers = header;
+			} finally {
+				reader.stopParsing();
+			}
+
+		}
+
+		@Override
+		public void handleChunk(InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception {
+			CsvLineHandler<Map<String, String>> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
+			if(csvLineHandler != null) {
+				CsvParser reader = createCsvParser(in);
+
+				handle(csvLineHandler, reader, headers, executor);
+			}
+		}
+
+		public ByteArrayOutputStream getFirstLine(InputStream in) throws IOException {
+			// seek backward for a newline
+			ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
+			int read;
+			do {
+				read = in.read();
+				if(read == -1) {
+					throw new IllegalArgumentException();
+				}
+				if(read == '\n') {
+					break;
+				}
+				out.write(read);
+			} while(true);
+			
+			return out;
+		}
+		
+	}
 
 	protected CsvLineHandlerFactory csvLineHandlerFactory;
 
 	public AbstractUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
 		this.csvLineHandlerFactory = csvLineHandlerFactory;
 	}
-	
-	public void handle(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
-		CsvParser reader = createCsvParser(in);
-		
-		String[] header = reader.parseNext();
-		for(int i = 0; i < header.length; i++) {
-			if(header[i] != null && header[i].trim().isEmpty()) {
-				header[i] = null;
-			}
-		}
-		
-		CsvLineHandler<Map<String, String>> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
-		if(csvLineHandler != null) {
-			handle(csvLineHandler, name, reader, header, executor);
-		} else {
-			// ignore
-		}
+
+	@Override
+	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		return null;
+	}
+
+	@Override
+	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		return null;
 	}
 
 	/**
@@ -77,7 +153,7 @@ public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFil
 		return settings;
 	}
 	
-	public void handle(CsvLineHandler<Map<String, String>> csvLineHandler, String name, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
+	public void handle(CsvLineHandler<Map<String, String>> csvLineHandler, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
 		Map<String, String> fields = new HashMap<>(256);
 		
 		try {
@@ -105,56 +181,27 @@ public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFil
 	}
 	
 	@Override
-	public FileChunkSplitter getFileEntryChunkSplitter(String name, long size, InputStream in, ThreadPoolExecutor executor) throws Exception {
-		CsvParser reader = createCsvParser(new ByteArrayInputStream(getFirstLine(in).toByteArray()));
-		try {
-			String[] header = reader.parseNext();
-			for(int i = 0; i < header.length; i++) {
-				if(header[i] != null && header[i].trim().isEmpty()) {
-					header[i] = null;
-				}
-			}
-			return new CsvFileChunkSplitter(header);
-		} finally {
-			reader.stopParsing();
-		}
-	}
-
-	public ByteArrayOutputStream getFirstLine(InputStream in) throws IOException {
-		// seek backward for a newline
-		ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
-		int read;
-		do {
-			read = in.read();
-			if(read == -1) {
-				throw new IllegalArgumentException();
-			}
-			if(read == '\n') {
-				break;
-			}
-			out.write(read);
-		} while(true);
-		
-		return out;
-	}
-
-	protected class CsvFileChunkSplitter extends NewlineChunkSplitter {
-
-		private final String[] names;
-		
-		public CsvFileChunkSplitter(String[] names) {
-			this.names = names;
-		}
-
-		@Override
-		public void handleChunk(String name, long size, InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception {
-			CsvLineHandler<Map<String, String>> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
-			if(csvLineHandler != null) {
-				CsvParser reader = createCsvParser(in);
-
-				handle(csvLineHandler, name, reader, names, executor);
-			}
-		}
+	public void beginFileCollection(String name) {
+		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void beginFileEntry(String name) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void endFileEntry(String name, ThreadPoolExecutor executor) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void endFileCollection(String name, ThreadPoolExecutor executor) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

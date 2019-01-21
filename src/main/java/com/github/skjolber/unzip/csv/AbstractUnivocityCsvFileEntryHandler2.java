@@ -13,7 +13,7 @@ import com.github.skjolber.stcsv.AbstractCsvMapper;
 import com.github.skjolber.stcsv.AbstractCsvReader;
 import com.github.skjolber.stcsv.StaticCsvMapper;
 import com.github.skjolber.unzip.ChunkedFileEntryHandler;
-import com.github.skjolber.unzip.FileChunkSplitter;
+import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
 import com.github.skjolber.unzip.NewlineChunkSplitter;
 import com.univocity.parsers.csv.CsvParser;
@@ -96,7 +96,7 @@ public abstract class AbstractUnivocityCsvFileEntryHandler2 implements ChunkedFi
 	}
 
 	@Override
-	public FileChunkSplitter getFileEntryChunkSplitter(String name, long size, InputStream in, ThreadPoolExecutor executor) throws Exception {
+	public FileEntryChunkStreamHandler getFileEntryChunkStreamHandler(String name, long size, InputStream in, ThreadPoolExecutor executor) throws Exception {
 
 		StaticCsvMapper<?> reader = createStaticCsvMapper(in, name);
 

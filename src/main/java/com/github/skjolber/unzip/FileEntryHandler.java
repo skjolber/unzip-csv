@@ -21,17 +21,7 @@ public interface FileEntryHandler {
 
 	void beginFileEntry(String name);
 
-	/**
-	 * Handle a file entry
-	 * 
-	 * @param name name of file
-	 * @param size file size
-	 * @param in file binary stream
-	 * @param executor work delegation executor
-	 * @param consume if true, the stream must be consumed in the current thread (not delegated to executor)
-	 * @throws Exception if a problem occurs
-	 */
-	void handle(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception;
+	FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception;
 
 	/**
 	 * End handling a file entry

@@ -67,7 +67,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler extends AbstractCs
 		CsvLineHandler<T> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
 		if(csvLineHandler != null) {
 			if(consume) {
-				final FileEntryState fileEntryState = parts.get(name);
+				final FileEntryChunkState fileEntryState = parts.get(name);
 				fileEntryState.increment();
 	
 				handle(csvLineHandler, name, csvReader, executor);
@@ -91,7 +91,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler extends AbstractCs
 	
 	
 	public <T> void execute(CsvLineHandler<T> csvLineHandler, String name, CsvReader<? extends T> reader, ThreadPoolExecutor executor) throws Exception {
-		final FileEntryState fileEntryState = parts.get(name);
+		final FileEntryChunkState fileEntryState = parts.get(name);
 		
 		fileEntryState.increment();
 		
@@ -114,7 +114,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler extends AbstractCs
 
 	@Override
 	public void beginFileEntry(String name) {
-		parts.put(name, new FileEntryState());
+		parts.put(name, new FileEntryChunkState());
 	}
 	
 	protected abstract void notifyEndHandler(CsvLineHandler<?> csvLineHandler, String name, ThreadPoolExecutor executor);
