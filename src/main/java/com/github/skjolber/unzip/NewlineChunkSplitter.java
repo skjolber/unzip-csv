@@ -1,6 +1,6 @@
 package com.github.skjolber.unzip;
 
-public abstract class NewlineChunkSplitter implements FileChunkSplitter {
+public class NewlineChunkSplitter implements FileChunkSplitter {
 
 	@Override
 	public int getNextChunkIndex(byte[] bytes, int index) {

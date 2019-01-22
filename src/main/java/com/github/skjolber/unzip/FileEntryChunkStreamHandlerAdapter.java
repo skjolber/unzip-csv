@@ -21,6 +21,7 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 	public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
 		
 		FileChunkSplitter fileChunkSplitter = delegate.getFileChunkSplitter();
+		delegate.initialize(in, executor);
 		
 		byte[] buffer = new byte[Math.min(8192 * 16, chuckLength)];
 

@@ -1,17 +1,23 @@
 package com.github.skjolber.unzip.csv;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.github.skjolber.stcsv.AbstractCsvMapper;
-import com.github.skjolber.stcsv.AbstractCsvReader;
-import com.github.skjolber.stcsv.CsvMapper2;
 import com.github.skjolber.stcsv.CsvReader;
+import com.github.skjolber.stcsv.StaticCsvMapper;
+import com.github.skjolber.unzip.ChunkedFileEntryHandler;
+import com.github.skjolber.unzip.FileChunkSplitter;
+import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
+import com.github.skjolber.unzip.FileEntryStreamHandler;
+import com.github.skjolber.unzip.NewlineChunkSplitter;
+import com.univocity.parsers.csv.CsvParser;
 
 /**
  * 
@@ -19,114 +25,140 @@ import com.github.skjolber.unzip.FileEntryHandler;
  * 
  */
 
-public abstract class AbstractSesselTjonnaCsvFileEntryHandler extends AbstractCsvFileEntryHandler {
-	
-	protected Map<String, H> constructors = new ConcurrentHashMap<>();
-	
-	public AbstractSesselTjonnaCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
-		this.csvLineHandlerFactory = csvLineHandlerFactory;
-	}
-	
-	public AbstractSesselTjonnaCsvFileEntryHandler() {
-	}
+public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHandler {
 
-	public void handle(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
-		// loose coupling between factory and parser
-		handleImpl(name, size, in, executor, consume);
-	}
-	
-	protected <T> void handleImpl(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
+	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
 
-		Reader reader = new InputStreamReader(in);
+		protected final String name;
+		
+		public CsvFileEntryStreamHandler(String name) {
+			super();
+			this.name = name;
+		}
 
-		H mapper = constructors.get(name);
-		if(mapper == null) {
-			StringBuilder builder = new StringBuilder();
+		@Override
+		public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
+			CsvReader reader = getCsvReader(name, in);
 			
+			CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
+			if(csvLineHandler != null) {
+				AbstractSesselTjonnaCsvFileEntryHandler.this.handle(csvLineHandler, name, reader, executor);
+			} else {
+				// ignore
+			}
+		}
+	}
+
+	protected class CsvFileEntryChunkStreamHandler implements FileEntryChunkStreamHandler {
+
+		protected final String name;
+		protected StaticCsvMapper mapper;
+		
+		public CsvFileEntryChunkStreamHandler(String name) {
+			super();
+			this.name = name;
+		}
+
+		@Override
+		public FileChunkSplitter getFileChunkSplitter() {
+			return AbstractSesselTjonnaCsvFileEntryHandler.this.getFileChunkSplitter(name);
+		}
+
+		@Override
+		public void initialize(InputStream in, ThreadPoolExecutor executor) throws Exception {
+			byte[] byteArray = getFirstLine(in).toByteArray();
+			mapper = getStaticCsvMapper(name, byteArray);
+		}
+
+		@Override
+		public void handleChunk(InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception {
+			CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
+			if(csvLineHandler != null) {
+				CsvReader reader = mapper.newInstance(new InputStreamReader(in, StandardCharsets.UTF_8));
+
+				handle(csvLineHandler, name, reader, executor);
+			}
+		}
+
+		public ByteArrayOutputStream getFirstLine(InputStream in) throws IOException {
+			// seek backward for a newline
+			ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 			int read;
 			do {
-				
-				read = reader.read();
+				read = in.read();
 				if(read == -1) {
-					return;
+					throw new IllegalArgumentException();
 				}
+				out.write(read);
 				if(read == '\n') {
 					break;
 				}
-				builder.append((char)read);
 			} while(true);
 			
-			//boolean carriageReturn = builder.charAt(builder.length() - 1) == '\r';
-			
-			mapper = getCsvMapper(name, builder.toString());
+			return out;
 		}
-
-		AbstractCsvReader<? extends T> csvReader = mapper.newInstance(reader);
 		
-		// get the handler here so it is possible to maintain order within a handler factory (for the same file), if desired
-		CsvLineHandler<T> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
-		if(csvLineHandler != null) {
-			if(consume) {
-				final FileEntryChunkState fileEntryState = parts.get(name);
-				fileEntryState.increment();
-	
-				handle(csvLineHandler, name, csvReader, executor);
-	
-				fileEntryState.decrement();
-				
-				notifyEndFileEntry(name, fileEntryState, executor);
-				
-				notifyEndHandler(csvLineHandler, name, executor);
-			} else {
-				execute(csvLineHandler, name, csvReader, executor);
-			}
-		}
 	}
-	
-	protected abstract H getCsvMapper(String name, String string);
 
-	protected abstract <T> CsvReaderConstructor<T> getReaderConstructor(String header, String name);
+	protected CsvLineHandlerFactory csvLineHandlerFactory;
 
-	protected abstract void handle(CsvReader<? extends T> reader, ThreadPoolExecutor executor) throws Exception;
-	
-	
-	public <T> void execute(CsvLineHandler<T> csvLineHandler, String name, CsvReader<? extends T> reader, ThreadPoolExecutor executor) throws Exception {
-		final FileEntryChunkState fileEntryState = parts.get(name);
-		
-		fileEntryState.increment();
-		
-		executor.execute(new Runnable() {
-			public void run() {
-				try {
-					handle(csvLineHandler, name, reader, executor);
-					
-					fileEntryState.decrement();
-					
-					notifyEndFileEntry(name, fileEntryState, executor);
-					
-					notifyEndHandler(csvLineHandler, name, executor);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
+	public AbstractSesselTjonnaCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
+		this.csvLineHandlerFactory = csvLineHandlerFactory;
+	}
+
+	protected void handle(CsvLineHandler csvLineHandler, String name, CsvReader reader, ThreadPoolExecutor executor) throws Exception {
+		do {
+			Object value = reader.next();
+			if(value == null) {
+				break;
 			}
-		});
+			csvLineHandler.handleLine(value);
+		} while(true);
 	}
 
 	@Override
-	public void beginFileEntry(String name) {
-		parts.put(name, new FileEntryChunkState());
+	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		return new CsvFileEntryStreamHandler(name);
+	}
+
+	@Override
+	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		return new CsvFileEntryChunkStreamHandler(name);
 	}
 	
-	protected abstract void notifyEndHandler(CsvLineHandler<?> csvLineHandler, String name, ThreadPoolExecutor executor);
+	public void handle(CsvLineHandler<Map<String, String>> csvLineHandler, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
+		Map<String, String> fields = new HashMap<>(256);
+		
+		try {
+			do {
+				String[] line = reader.parseNext();
+				if(line == null) {
+					break;
+				}
+
+				for (int i = 0; i < line.length; i++) {
+					String string = line[i];
+					if(string != null && !string.isEmpty()) {
+						fields.put(names[i], string);
+					}
+				}
+				if(!fields.isEmpty()) {
+					csvLineHandler.handleLine(fields);
+					
+					fields.clear();
+				}
+			} while(true);
+		} finally {
+			reader.stopParsing();
+		}		
+	}
+	
+	protected FileChunkSplitter getFileChunkSplitter(String name) {
+		return new NewlineChunkSplitter();
+	}
+
+	protected abstract StaticCsvMapper getStaticCsvMapper(String name, byte[] byteArray);
+
+	protected abstract CsvReader getCsvReader(String name, InputStream in);
 
 }
-
-
-
-
-
-
-
-
-
-

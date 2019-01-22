@@ -24,12 +24,17 @@ import com.univocity.parsers.csv.CsvParserSettings;
  * 
  */
 
-public class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHandler {
+public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHandler {
 
 	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
 
-		private String name;
+		protected final String name;
 		
+		public CsvFileEntryStreamHandler(String name) {
+			super();
+			this.name = name;
+		}
+
 		@Override
 		public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
 			CsvParser reader = createCsvParser(in);
@@ -53,12 +58,17 @@ public class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHan
 
 	protected class CsvFileEntryChunkStreamHandler implements FileEntryChunkStreamHandler {
 
-		private String name;
-		private String[] headers;
+		protected final String name;
+		protected String[] headers;
 		
+		public CsvFileEntryChunkStreamHandler(String name) {
+			super();
+			this.name = name;
+		}
+
 		@Override
 		public FileChunkSplitter getFileChunkSplitter() {
-			return null;
+			return AbstractUnivocityCsvFileEntryHandler.this.getFileChunkSplitter(name);
 		}
 
 		@Override
@@ -75,7 +85,6 @@ public class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHan
 			} finally {
 				reader.stopParsing();
 			}
-
 		}
 
 		@Override
@@ -116,12 +125,12 @@ public class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHan
 
 	@Override
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
-		return null;
+		return new CsvFileEntryStreamHandler(name);
 	}
 
 	@Override
 	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
-		return null;
+		return new CsvFileEntryChunkStreamHandler(name);
 	}
 
 	/**
@@ -180,28 +189,8 @@ public class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHan
 		}		
 	}
 	
-	@Override
-	public void beginFileCollection(String name) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void beginFileEntry(String name) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void endFileEntry(String name, ThreadPoolExecutor executor) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void endFileCollection(String name, ThreadPoolExecutor executor) {
-		// TODO Auto-generated method stub
-		
+	protected FileChunkSplitter getFileChunkSplitter(String name) {
+		return new NewlineChunkSplitter();
 	}
 
 }
