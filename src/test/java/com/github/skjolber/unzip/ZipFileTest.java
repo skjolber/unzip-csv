@@ -11,7 +11,7 @@ public class ZipFileTest {
 
 	@Test
 	public void testMultiThread() throws IOException {
-		FileEntryHandler handler = new ChunkSplitterFileEntryHandler(32 * 1024 * 1024, new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory()));
+		FileEntryHandler handler = new ChunkSplitterFileEntryHandler(32 * 1024 * 1024, new TestUnivocityCsvFileEntryHandler(new NoopUnivocityCsvLineHandlerFactory()));
 		
 		File file = new File("./src/test/resources/static/rb_norway-aggregated-gtfs.zip");
 		
@@ -31,7 +31,7 @@ public class ZipFileTest {
 
 	@Test
 	public void testSingleThread() throws IOException {
-		FileEntryHandler handler = new TestCsvFileEntryHandler(new NoopCsvLineHandlerFactory());
+		FileEntryHandler handler = new TestUnivocityCsvFileEntryHandler(new NoopUnivocityCsvLineHandlerFactory());
 		
 		File file = new File("./src/test/resources/static/rb_norway-aggregated-gtfs.zip");
 		

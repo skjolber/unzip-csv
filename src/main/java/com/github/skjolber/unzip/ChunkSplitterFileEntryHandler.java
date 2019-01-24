@@ -33,7 +33,6 @@ public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
 	 */
 	
 	public ChunkSplitterFileEntryHandler(int chuckLength, ChunkedFileEntryHandler delegate) {
-		super();
 		this.chuckLength = chuckLength;
 		this.delegate = delegate;
 	}

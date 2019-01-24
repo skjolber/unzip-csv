@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,13 +12,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
 import com.github.skjolber.stcsv.StaticCsvMapper;
+import com.github.skjolber.stcsv.StaticCsvMapper2;
 import com.github.skjolber.unzip.ChunkedFileEntryHandler;
 import com.github.skjolber.unzip.FileChunkSplitter;
 import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
 import com.github.skjolber.unzip.FileEntryStreamHandler;
 import com.github.skjolber.unzip.NewlineChunkSplitter;
-import com.univocity.parsers.csv.CsvParser;
 
 /**
  * 
@@ -26,6 +27,27 @@ import com.univocity.parsers.csv.CsvParser;
  */
 
 public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHandler {
+
+	protected abstract class StaticCsvMapperAdapter<T, D> implements StaticCsvMapper<T> {
+
+		protected StaticCsvMapper2<T, D> staticCsvMapper2;
+		
+		public StaticCsvMapperAdapter(StaticCsvMapper2<T, D> staticCsvMapper2) {
+			this.staticCsvMapper2 = staticCsvMapper2;
+		}
+
+		@Override
+		public CsvReader<T> newInstance(Reader reader) {
+			return staticCsvMapper2.newInstance(reader, createDelegate());
+		}
+
+		@Override
+		public CsvReader<T> newInstance(Reader reader, char[] current, int offset, int length) {
+			return staticCsvMapper2.newInstance(reader, current, offset, length, createDelegate());
+		}
+
+		protected abstract D createDelegate();
+	}
 
 	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
 
@@ -126,39 +148,12 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements Chunked
 		return new CsvFileEntryChunkStreamHandler(name);
 	}
 	
-	public void handle(CsvLineHandler<Map<String, String>> csvLineHandler, CsvParser reader, String[] names, ThreadPoolExecutor executor) throws IOException {		
-		Map<String, String> fields = new HashMap<>(256);
-		
-		try {
-			do {
-				String[] line = reader.parseNext();
-				if(line == null) {
-					break;
-				}
-
-				for (int i = 0; i < line.length; i++) {
-					String string = line[i];
-					if(string != null && !string.isEmpty()) {
-						fields.put(names[i], string);
-					}
-				}
-				if(!fields.isEmpty()) {
-					csvLineHandler.handleLine(fields);
-					
-					fields.clear();
-				}
-			} while(true);
-		} finally {
-			reader.stopParsing();
-		}		
-	}
-	
 	protected FileChunkSplitter getFileChunkSplitter(String name) {
 		return new NewlineChunkSplitter();
 	}
 
-	protected abstract StaticCsvMapper getStaticCsvMapper(String name, byte[] byteArray);
+	protected abstract StaticCsvMapper getStaticCsvMapper(String name, byte[] byteArray) throws Exception;
 
-	protected abstract CsvReader getCsvReader(String name, InputStream in);
+	protected abstract CsvReader getCsvReader(String name, InputStream in) throws Exception;
 
 }

@@ -5,9 +5,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import com.github.skjolber.unzip.csv.AbstractUnivocityCsvFileEntryHandler;
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
 
-public class TestCsvFileEntryHandler extends AbstractUnivocityCsvFileEntryHandler {
+public class TestUnivocityCsvFileEntryHandler extends AbstractUnivocityCsvFileEntryHandler {
 
-	public TestCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
+	public TestUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
 		super(csvLineHandlerFactory);
 	}
 

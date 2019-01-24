@@ -2,6 +2,8 @@ package com.github.skjolber.unzip;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -51,19 +53,20 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 			if(read == -1) {
 				// end of file
 				fileEntryState.increment();
-				
+
 				handleChunk(new ByteArrayInputStream(byteArray), executor, false, chunkNumber);
 				
 				break;
 			} else {
 				int index = fileChunkSplitter.getNextChunkIndex(byteArray, byteArray.length - 1);
-
+				
 				if(index == -1) {
 					throw new IllegalArgumentException("No newline found in chunk size " + byteArray.length);
 				}
 				fileEntryState.increment();
 
-				handleChunk(new ByteArrayInputStream(byteArray, 0, index - 1), executor, false, chunkNumber);
+				
+				handleChunk(new ByteArrayInputStream(byteArray, 0, index), executor, false, chunkNumber);
 
 				// reuse buffer
 				bout.reset();
