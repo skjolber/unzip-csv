@@ -54,6 +54,11 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 				// end of file
 				fileEntryState.increment();
 
+				File file = new File("/tmp/fil" + chunkNumber);
+				FileOutputStream fout = new FileOutputStream(file);
+				fout.write(byteArray);
+				fout.close();
+				
 				handleChunk(new ByteArrayInputStream(byteArray), executor, false, chunkNumber);
 				
 				break;
@@ -65,6 +70,10 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 				}
 				fileEntryState.increment();
 
+				File file = new File("/tmp/fil" + chunkNumber);
+				FileOutputStream fout = new FileOutputStream(file);
+				fout.write(byteArray, 0, index);
+				fout.close();
 				
 				handleChunk(new ByteArrayInputStream(byteArray, 0, index), executor, false, chunkNumber);
 

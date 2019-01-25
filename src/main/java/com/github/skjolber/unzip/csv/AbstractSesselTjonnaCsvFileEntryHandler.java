@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
@@ -38,15 +38,15 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements Chunked
 
 		@Override
 		public CsvReader<T> newInstance(Reader reader) {
-			return staticCsvMapper2.newInstance(reader, createDelegate());
+			return staticCsvMapper2.newInstance(reader, newIntermediateProcessor());
 		}
 
 		@Override
 		public CsvReader<T> newInstance(Reader reader, char[] current, int offset, int length) {
-			return staticCsvMapper2.newInstance(reader, current, offset, length, createDelegate());
+			return staticCsvMapper2.newInstance(reader, current, offset, length, newIntermediateProcessor());
 		}
 
-		protected abstract D createDelegate();
+		protected abstract D newIntermediateProcessor();
 	}
 
 	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
@@ -75,10 +75,12 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements Chunked
 
 		protected final String name;
 		protected StaticCsvMapper mapper;
+		protected Charset charset;
 		
-		public CsvFileEntryChunkStreamHandler(String name) {
+		public CsvFileEntryChunkStreamHandler(String name, Charset charset) {
 			super();
 			this.name = name;
+			this.charset = charset;
 		}
 
 		@Override
@@ -88,21 +90,21 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements Chunked
 
 		@Override
 		public void initialize(InputStream in, ThreadPoolExecutor executor) throws Exception {
-			byte[] byteArray = getFirstLine(in).toByteArray();
-			mapper = getStaticCsvMapper(name, byteArray);
+			String line = getFirstLine(in);
+			mapper = getStaticCsvMapper(name, line);
 		}
 
 		@Override
 		public void handleChunk(InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception {
 			CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
 			if(csvLineHandler != null) {
-				CsvReader reader = mapper.newInstance(new InputStreamReader(in, StandardCharsets.UTF_8));
+				CsvReader reader = mapper.newInstance(new InputStreamReader(in, charset));
 
 				handle(csvLineHandler, name, reader, executor);
 			}
 		}
 
-		public ByteArrayOutputStream getFirstLine(InputStream in) throws IOException {
+		public String getFirstLine(InputStream in) throws IOException {
 			// seek backward for a newline
 			ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 			int read;
@@ -117,7 +119,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements Chunked
 				}
 			} while(true);
 			
-			return out;
+			return new String(out.toByteArray(), charset);
 		}
 		
 	}
@@ -145,15 +147,20 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements Chunked
 
 	@Override
 	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
-		return new CsvFileEntryChunkStreamHandler(name);
+		return new CsvFileEntryChunkStreamHandler(name, getCharset(name));
 	}
 	
 	protected FileChunkSplitter getFileChunkSplitter(String name) {
 		return new NewlineChunkSplitter();
 	}
 
-	protected abstract StaticCsvMapper getStaticCsvMapper(String name, byte[] byteArray) throws Exception;
+	protected Charset getCharset(String name) { // default implementation
+		return StandardCharsets.UTF_8;
+	}
 
-	protected abstract CsvReader getCsvReader(String name, InputStream in) throws Exception;
+	protected abstract <T> StaticCsvMapper<T> getStaticCsvMapper(String name, String firstLine) throws Exception;
+
+	protected abstract <T> CsvReader<T> getCsvReader(String name, InputStream in) throws Exception;
+	
 
 }
