@@ -19,7 +19,7 @@ public interface FileEntryChunkStreamHandler {
 	 * 
 	 * @param in file binary stream
 	 * @param executor work delegation executor
-	 * @param first true if the chunk is the first
+	 * @param chunkNumber chunk number (0 ... n) 
 	 * @throws Exception if a problem occurs
 	 */
 

@@ -4,21 +4,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
 import com.github.skjolber.stcsv.StaticCsvMapper;
-import com.github.skjolber.stcsv.StaticCsvMapper2;
 import com.github.skjolber.unzip.ChunkedFileEntryHandler;
 import com.github.skjolber.unzip.FileChunkSplitter;
 import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
 import com.github.skjolber.unzip.FileEntryStreamHandler;
-import com.github.skjolber.unzip.NewlineChunkSplitter;
 
 /**
  * 
@@ -28,84 +23,74 @@ import com.github.skjolber.unzip.NewlineChunkSplitter;
 
 public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHandler {
 
-	protected abstract class StaticCsvMapperAdapter<T, D> implements StaticCsvMapper<T> {
-
-		protected StaticCsvMapper2<T, D> staticCsvMapper2;
-		
-		public StaticCsvMapperAdapter(StaticCsvMapper2<T, D> staticCsvMapper2) {
-			this.staticCsvMapper2 = staticCsvMapper2;
-		}
-
-		@Override
-		public CsvReader<T> newInstance(Reader reader) {
-			return staticCsvMapper2.newInstance(reader, newIntermediateProcessor());
-		}
-
-		@Override
-		public CsvReader<T> newInstance(Reader reader, char[] current, int offset, int length) {
-			return staticCsvMapper2.newInstance(reader, current, offset, length, newIntermediateProcessor());
-		}
-
-		protected abstract D newIntermediateProcessor();
-	}
-
-	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
+	protected static abstract class AbstractCsvFileEntryStreamHandler<T> implements FileEntryStreamHandler {
 
 		protected final String name;
+		protected final CsvLineHandlerFactory csvLineHandlerFactory;
 		
-		public CsvFileEntryStreamHandler(String name) {
+		public AbstractCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory) {
 			super();
 			this.name = name;
+			this.csvLineHandlerFactory = csvLineHandlerFactory;
 		}
 
 		@Override
 		public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
-			CsvReader reader = getCsvReader(name, in);
-			
-			CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
-			if(csvLineHandler != null) {
-				AbstractSesselTjonnaCsvFileEntryHandler.this.handle(csvLineHandler, name, reader, executor);
-			} else {
-				// ignore
+			CsvLineHandler<T> handler = csvLineHandlerFactory.getHandler(name, executor);
+			if(handler != null) {
+				handle(createCsvReader(in), handler, executor);
 			}
 		}
+
+		protected void handle(CsvReader<T> reader, CsvLineHandler<T> handler, ThreadPoolExecutor executor) throws Exception {
+			do {
+				T value = reader.next();
+				if(value == null) {
+					break;
+				}
+				handler.handleLine(value);
+			} while(true);
+		}
+
+		protected abstract CsvReader<T> createCsvReader(InputStream in) throws Exception;
+
 	}
 
-	protected class CsvFileEntryChunkStreamHandler implements FileEntryChunkStreamHandler {
+	protected static abstract class AbstractCsvFileEntryChunkStreamHandler<T> implements FileEntryChunkStreamHandler {
 
 		protected final String name;
-		protected StaticCsvMapper mapper;
+		protected StaticCsvMapper<T> mapper;
 		protected Charset charset;
-		
-		public CsvFileEntryChunkStreamHandler(String name, Charset charset) {
+		protected FileChunkSplitter fileChunkSplitter;
+		protected final CsvLineHandlerFactory csvLineHandlerFactory;
+
+		public AbstractCsvFileEntryChunkStreamHandler(String name, Charset charset, FileChunkSplitter fileChunkSplitter, CsvLineHandlerFactory csvLineHandlerFactory) {
 			super();
 			this.name = name;
 			this.charset = charset;
+			this.fileChunkSplitter = fileChunkSplitter;
+			this.csvLineHandlerFactory = csvLineHandlerFactory;
 		}
 
 		@Override
 		public FileChunkSplitter getFileChunkSplitter() {
-			return AbstractSesselTjonnaCsvFileEntryHandler.this.getFileChunkSplitter(name);
+			return fileChunkSplitter;
 		}
 
 		@Override
 		public void initialize(InputStream in, ThreadPoolExecutor executor) throws Exception {
-			String line = getFirstLine(in);
-			mapper = getStaticCsvMapper(name, line);
+			mapper = createStaticCsvMapper(getFirstLine(in));
 		}
 
 		@Override
 		public void handleChunk(InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception {
-			CsvLineHandler csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
-			if(csvLineHandler != null) {
-				CsvReader reader = mapper.newInstance(new InputStreamReader(in, charset));
-
-				handle(csvLineHandler, name, reader, executor);
+			CsvLineHandler<T> handler = csvLineHandlerFactory.getHandler(name, executor);
+			if(handler != null) {
+				handle(mapper.newInstance(new InputStreamReader(in, charset)), handler, executor);
 			}
 		}
 
 		public String getFirstLine(InputStream in) throws IOException {
-			// seek backward for a newline
 			ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 			int read;
 			do {
@@ -122,45 +107,29 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler implements Chunked
 			return new String(out.toByteArray(), charset);
 		}
 		
-	}
+		protected abstract StaticCsvMapper<T> createStaticCsvMapper(String firstLine) throws Exception;
 
-	protected CsvLineHandlerFactory csvLineHandlerFactory;
+		protected void handle(CsvReader<T> reader, CsvLineHandler<T> handler, ThreadPoolExecutor executor) throws Exception {
+			do {
+				T value = reader.next();
+				if(value == null) {
+					break;
+				}
+				handler.handleLine(value);
+			} while(true);
+		}
 
-	public AbstractSesselTjonnaCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
-		this.csvLineHandlerFactory = csvLineHandlerFactory;
-	}
-
-	protected void handle(CsvLineHandler csvLineHandler, String name, CsvReader reader, ThreadPoolExecutor executor) throws Exception {
-		do {
-			Object value = reader.next();
-			if(value == null) {
-				break;
-			}
-			csvLineHandler.handleLine(value);
-		} while(true);
 	}
 
 	@Override
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
-		return new CsvFileEntryStreamHandler(name);
+		return null;
 	}
 
 	@Override
 	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
-		return new CsvFileEntryChunkStreamHandler(name, getCharset(name));
-	}
-	
-	protected FileChunkSplitter getFileChunkSplitter(String name) {
-		return new NewlineChunkSplitter();
+		return null;
 	}
 
-	protected Charset getCharset(String name) { // default implementation
-		return StandardCharsets.UTF_8;
-	}
-
-	protected abstract <T> StaticCsvMapper<T> getStaticCsvMapper(String name, String firstLine) throws Exception;
-
-	protected abstract <T> CsvReader<T> getCsvReader(String name, InputStream in) throws Exception;
-	
 
 }

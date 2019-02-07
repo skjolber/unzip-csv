@@ -2,6 +2,7 @@ package com.github.skjolber.unzip;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -15,41 +16,75 @@ import com.github.skjolber.unzip.csv.Trip;
 
 public class TestSesselTjonnaCsvFileEntryHandler extends AbstractSesselTjonnaCsvFileEntryHandler {
 
-	protected CsvMapper<Trip> plain;
+	protected NoopSesselTjonnaCsvLineHandlerFactory factory = new NoopSesselTjonnaCsvLineHandlerFactory();
 
-	public TestSesselTjonnaCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) throws CsvBuilderException {
-		super(csvLineHandlerFactory);
+	protected static CsvMapper<Trip> plain;
+
+	static {
+		try {
+			plain = CsvMapper.builder(Trip.class)
+					.stringField("route_id")
+						.setter(Trip::setRouteId)
+						.quoted()
+						.optional()
+					.stringField("service_id")
+						.setter(Trip::setServiceId)
+						.quoted()
+						.required()
+					.stringField("trip_id")
+						.setter(Trip::setTripId)
+						.quoted()
+						.required()
+					.stringField("trip_headsign")
+						.setter(Trip::setTripHeadsign)
+						.quoted()
+						.optional()
+					.integerField("direction_id")
+						.setter(Trip::setDirectionId)
+						.quoted()
+						.optional()
+					.stringField("shape_id")
+						.setter(Trip::setShapeId)
+						.quoted()
+						.optional()
+					.integerField("wheelchair_accessible")
+						.setter(Trip::setWheelchairAccessible)
+						.quoted()
+						.optional()
+					.build();
+		} catch (CsvBuilderException e) {
+			throw new RuntimeException();
+		}
+	}
+
+	private static class TripCsvFileEntryStreamHandler extends AbstractCsvFileEntryStreamHandler<Trip> {
+
+		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory) {
+			super(name, csvLineHandlerFactory);
+		}
+
+		@Override
+		protected CsvReader<Trip> createCsvReader(InputStream in) throws Exception {
+			return plain.create(new InputStreamReader(in, StandardCharsets.UTF_8));
+		}
 		
-		plain = CsvMapper.builder(Trip.class)
-				.stringField("route_id")
-					.setter(Trip::setRouteId)
-					.quoted()
-					.optional()
-				.stringField("service_id")
-					.setter(Trip::setServiceId)
-					.quoted()
-					.required()
-				.stringField("trip_id")
-					.setter(Trip::setTripId)
-					.quoted()
-					.required()
-				.stringField("trip_headsign")
-					.setter(Trip::setTripHeadsign)
-					.quoted()
-					.optional()
-				.integerField("direction_id")
-					.setter(Trip::setDirectionId)
-					.quoted()
-					.optional()
-				.stringField("shape_id")
-					.setter(Trip::setShapeId)
-					.quoted()
-					.optional()
-				.integerField("wheelchair_accessible")
-					.setter(Trip::setWheelchairAccessible)
-					.quoted()
-					.optional()
-				.build();
+	}
+
+	private static class TripCsvFileEntryChunkStreamHandler extends AbstractCsvFileEntryChunkStreamHandler<Trip> {
+		
+		public TripCsvFileEntryChunkStreamHandler(String name, Charset charset, FileChunkSplitter fileChunkSplitter, CsvLineHandlerFactory csvLineHandlerFactory) {
+			super(name, charset, fileChunkSplitter, csvLineHandlerFactory);
+		}
+
+		@Override
+		protected StaticCsvMapper<Trip> createStaticCsvMapper(String firstLine) throws Exception {
+			return plain.buildStaticCsvMapper(firstLine);
+		}
+		
+	}
+
+
+	public TestSesselTjonnaCsvFileEntryHandler() throws CsvBuilderException {
 	}
 
 	@Override
@@ -71,18 +106,22 @@ public class TestSesselTjonnaCsvFileEntryHandler extends AbstractSesselTjonnaCsv
 	public void endFileCollection(String name, ThreadPoolExecutor executor) {
 		System.out.println("End zip file");
 	}
-
+	
 	@Override
-	protected StaticCsvMapper<?> getStaticCsvMapper(String name, String firstLine) throws Exception {
-		return plain.buildStaticCsvMapper(firstLine);
-	}
-
-	@Override
-	protected CsvReader<?> getCsvReader(String name, InputStream in) throws Exception {
+	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
 		if(name.equals("trips.txt")) {
-			return plain.create(new InputStreamReader(in, StandardCharsets.UTF_8));
+			return new TripCsvFileEntryStreamHandler(name, factory);
 		}
 		throw new RuntimeException();
 	}
+
+	@Override
+	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		if(name.equals("trips.txt")) {
+			return new TripCsvFileEntryChunkStreamHandler(name, StandardCharsets.UTF_8, new NewlineChunkSplitter(), factory);
+		}
+		throw new RuntimeException();
+	}
+
 
 }

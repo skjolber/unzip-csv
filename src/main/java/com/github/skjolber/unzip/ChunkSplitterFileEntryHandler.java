@@ -15,13 +15,6 @@ public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
 	
 	protected Map<String, FileEntryChunkState> parts = Collections.synchronizedMap(new HashMap<>());
 	
-	/**
-	 * Notify when processing is performed
-	 * 
-	 * @param name name of file processed
-	 * @param executor thread pool executor (for queuing additional post-processing)
-	 */
-
 	protected final int chuckLength; // effective length depends on line lengths
 	protected final ChunkedFileEntryHandler delegate;
 	

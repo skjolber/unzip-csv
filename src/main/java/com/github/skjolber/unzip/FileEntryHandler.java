@@ -1,6 +1,5 @@
 package com.github.skjolber.unzip;
 
-import java.io.InputStream;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public interface FileEntryHandler {
