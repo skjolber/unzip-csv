@@ -2,8 +2,6 @@ package com.github.skjolber.unzip;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -22,9 +20,10 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 	@Override
 	public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
 		
-		FileChunkSplitter fileChunkSplitter = delegate.getFileChunkSplitter();
 		delegate.initialize(in, executor);
-		
+
+		FileChunkSplitter fileChunkSplitter = delegate.getFileChunkSplitter();
+
 		byte[] buffer = new byte[Math.min(8192 * 16, chuckLength)];
 
 		ByteArrayOutputStream bout = new ByteArrayOutputStream(chuckLength);
@@ -53,11 +52,6 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 			if(read == -1) {
 				// end of file
 				fileEntryState.increment();
-
-				File file = new File("/tmp/fil" + chunkNumber);
-				FileOutputStream fout = new FileOutputStream(file);
-				fout.write(byteArray);
-				fout.close();
 				
 				handleChunk(new ByteArrayInputStream(byteArray), executor, false, chunkNumber);
 				
@@ -69,11 +63,6 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 					throw new IllegalArgumentException("No newline found in chunk size " + byteArray.length);
 				}
 				fileEntryState.increment();
-
-				File file = new File("/tmp/fil" + chunkNumber);
-				FileOutputStream fout = new FileOutputStream(file);
-				fout.write(byteArray, 0, index);
-				fout.close();
 				
 				handleChunk(new ByteArrayInputStream(byteArray, 0, index), executor, false, chunkNumber);
 

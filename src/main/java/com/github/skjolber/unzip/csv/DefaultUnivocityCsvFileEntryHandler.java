@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.unzip.ChunkedFileEntryHandler;
+import com.github.skjolber.unzip.DefaultChunkedCsvFileEntryHandler;
 import com.github.skjolber.unzip.FileChunkSplitter;
 import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
@@ -24,7 +25,7 @@ import com.univocity.parsers.csv.CsvParserSettings;
  * 
  */
 
-public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFileEntryHandler {
+public class DefaultUnivocityCsvFileEntryHandler extends DefaultChunkedCsvFileEntryHandler {
 
 	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
 
@@ -48,7 +49,7 @@ public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFil
 			
 			CsvLineHandler<Map<String, String>> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
 			if(csvLineHandler != null) {
-				AbstractUnivocityCsvFileEntryHandler.this.handle(csvLineHandler, reader, header, executor);
+				DefaultUnivocityCsvFileEntryHandler.this.handle(csvLineHandler, reader, header, executor);
 			} else {
 				// ignore
 			}
@@ -68,12 +69,12 @@ public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFil
 
 		@Override
 		public FileChunkSplitter getFileChunkSplitter() {
-			return AbstractUnivocityCsvFileEntryHandler.this.getFileChunkSplitter(name);
+			return DefaultUnivocityCsvFileEntryHandler.this.getFileChunkSplitter(name);
 		}
 
 		@Override
 		public void initialize(InputStream in, ThreadPoolExecutor executor) throws Exception {
-			CsvParser reader = AbstractUnivocityCsvFileEntryHandler.this.createCsvParser(new ByteArrayInputStream(getFirstLine(in).toByteArray()));
+			CsvParser reader = DefaultUnivocityCsvFileEntryHandler.this.createCsvParser(new ByteArrayInputStream(getFirstLine(in).toByteArray()));
 			try {
 				String[] header = reader.parseNext();
 				for(int i = 0; i < header.length; i++) {
@@ -119,8 +120,11 @@ public abstract class AbstractUnivocityCsvFileEntryHandler implements ChunkedFil
 
 	protected CsvLineHandlerFactory csvLineHandlerFactory;
 
-	public AbstractUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
+	public DefaultUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
 		this.csvLineHandlerFactory = csvLineHandlerFactory;
+	}
+	
+	public DefaultUnivocityCsvFileEntryHandler() {
 	}
 
 	@Override

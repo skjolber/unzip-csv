@@ -44,7 +44,7 @@ public class ZipFileProcessor implements Runnable {
 							}
 							handler.endFileEntry(name, executor);
 						} catch (Exception e) {
-							throw new RuntimeException(e);
+							throw new RuntimeException("Problem parsing " + name, e);
 						} finally {
 							zin.close();
 						}

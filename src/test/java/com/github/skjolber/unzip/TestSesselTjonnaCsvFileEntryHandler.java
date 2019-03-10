@@ -10,11 +10,12 @@ import com.github.skjolber.stcsv.CsvMapper;
 import com.github.skjolber.stcsv.CsvReader;
 import com.github.skjolber.stcsv.StaticCsvMapper;
 import com.github.skjolber.stcsv.builder.CsvBuilderException;
-import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryHandler;
+import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryChunkStreamHandler;
+import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryStreamHandler;
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
 import com.github.skjolber.unzip.csv.Trip;
 
-public class TestSesselTjonnaCsvFileEntryHandler extends AbstractSesselTjonnaCsvFileEntryHandler {
+public class TestSesselTjonnaCsvFileEntryHandler extends DefaultChunkedCsvFileEntryHandler {
 
 	protected NoopSesselTjonnaCsvLineHandlerFactory factory = new NoopSesselTjonnaCsvLineHandlerFactory();
 
@@ -57,7 +58,7 @@ public class TestSesselTjonnaCsvFileEntryHandler extends AbstractSesselTjonnaCsv
 		}
 	}
 
-	private static class TripCsvFileEntryStreamHandler extends AbstractCsvFileEntryStreamHandler<Trip> {
+	private static class TripCsvFileEntryStreamHandler extends AbstractSesselTjonnaCsvFileEntryStreamHandler<Trip> {
 
 		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory) {
 			super(name, csvLineHandlerFactory);
@@ -70,7 +71,7 @@ public class TestSesselTjonnaCsvFileEntryHandler extends AbstractSesselTjonnaCsv
 		
 	}
 
-	private static class TripCsvFileEntryChunkStreamHandler extends AbstractCsvFileEntryChunkStreamHandler<Trip> {
+	private static class TripCsvFileEntryChunkStreamHandler extends AbstractSesselTjonnaCsvFileEntryChunkStreamHandler<Trip> {
 		
 		public TripCsvFileEntryChunkStreamHandler(String name, Charset charset, FileChunkSplitter fileChunkSplitter, CsvLineHandlerFactory csvLineHandlerFactory) {
 			super(name, charset, fileChunkSplitter, csvLineHandlerFactory);
