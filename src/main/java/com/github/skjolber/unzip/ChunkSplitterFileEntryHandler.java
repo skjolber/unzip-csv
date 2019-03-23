@@ -1,87 +1,47 @@
 package com.github.skjolber.unzip;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Read and split inputs into larger parts based on newline. 
+ * 
+ * Read and split inputs into larger parts and queue their execution on the executor thread.
  * 
  */
 
 public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
-
-	protected final int chuckLength; // effective length depends on line lengths
+	
+	protected Map<String, FileEntryChunkState> parts = Collections.synchronizedMap(new HashMap<>());
+	
+	protected final int minimumChuckLength;
 	protected final ChunkedFileEntryHandler delegate;
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param chuckLength number of bytes per segment
+	 * @param minimumChuckLength global minimum number of bytes per segment
 	 * @param delegate delegate for forwarding (whole or partial) streams. 
 	 */
 	
-	public ChunkSplitterFileEntryHandler(int chuckLength, ChunkedFileEntryHandler delegate) {
-		super();
-		this.chuckLength = chuckLength;
+	public ChunkSplitterFileEntryHandler(int minimumChuckLength, ChunkedFileEntryHandler delegate) {
+		this.minimumChuckLength = minimumChuckLength;
 		this.delegate = delegate;
 	}
 
-	public void handle(final String name, long size, InputStream in, final ThreadPoolExecutor executor, boolean consume) throws Exception {
-		if(size > chuckLength) {
-			
-			FileChunkSplitter splitFileEntry = delegate.splitFileEntry(name, size);
-			if(splitFileEntry != null) {
-				byte[] buffer = new byte[Math.min(8192 * 16, chuckLength)];
-	
-				ByteArrayOutputStream bout = new ByteArrayOutputStream(chuckLength);
-				
-				while(true) {
-					
-					int remaining = chuckLength;
-					
-					int read;
-					do {
-						read = in.read(buffer, 0, Math.min(buffer.length, remaining));
-	
-						if(read == -1) {
-							break;
-						}
-						
-						remaining -= read;
-	
-						bout.write(buffer, 0, read);
-					} while(remaining > 0);
-					
-					final byte[] byteArray = bout.toByteArray();
-					
-					if(read == -1) {
-						// end of file
-						delegate.handle(name, byteArray.length, new ByteArrayInputStream(byteArray), executor, false);
-						
-						break;
-					} else {
-						int index = splitFileEntry.getChunkSplitIndex(byteArray, byteArray.length - 1);
-	
-						if(index == -1) {
-							throw new IllegalArgumentException("No newline found in chunk size " + byteArray.length);
-						}
-						delegate.handle(name, size, new ByteArrayInputStream(byteArray, 0, index - 1), executor, false);
-	
-						// reuse buffer
-						bout.reset();
-						// write tail
-						if(index + 1 < byteArray.length) {
-							bout.write(byteArray, index + 1, byteArray.length - index - 1);
-						}
-					}
-				}
+	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		if(size > minimumChuckLength) {
+			FileEntryChunkStreamHandler fileEntryChunkedStreamHandler = delegate.getFileEntryChunkedStreamHandler(name, size, executor);
+			if(fileEntryChunkedStreamHandler != null) {
+				FileEntryChunkState fileEntryState = new FileEntryChunkState(name, this, executor);
+				parts.put(name, fileEntryState);
+				return new FileEntryChunkStreamHandlerAdapter(fileEntryState, fileEntryChunkedStreamHandler);
 			} else {
-				delegate.handle(name, size, in, executor, consume);
+				return delegate.getFileEntryStreamHandler(name, size, executor);
 			}
 		} else {
-			delegate.handle(name, size, in, executor, consume);
+			return delegate.getFileEntryStreamHandler(name, size, executor);
 		}
 	}
 
@@ -92,7 +52,12 @@ public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
 
 	@Override
 	public void endFileEntry(String name, ThreadPoolExecutor executor) {
-		delegate.endFileEntry(name, executor);
+		FileEntryChunkState fileEntryState = parts.remove(name);
+		if(fileEntryState != null) {
+			fileEntryState.ended();
+		} else {
+			delegate.endFileEntry(name, executor);
+		}
 	}
 
 	@Override
@@ -104,5 +69,6 @@ public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
 	public void endFileCollection(String name, ThreadPoolExecutor executor) {
 		delegate.endFileCollection(name, executor);
 	}
-	
+
+
 }

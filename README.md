@@ -29,37 +29,43 @@ Example dependency config:
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
 # Usage
+The top level `FileEntryHandler` is passed to the `ZipFileEngine`. 
 
-Implement an instance of `CsvLineHandler` and extend `AbstractCsvFileEntryHandler` to return specific handlers for each file in the ZIP archive. Then 
 
 ```java
-MyCsvFileEntryHandler handler = ...; // your code here
+FileEntryHandler handler = ...; // your code here
 
 ZipFileEngine engine = new ZipFileEngine(handler);
 boolean success = engine.handle(new FileZipFileFactory(file));
 ```
+where the default thread count is one per core.
 
-where the default thread count is one per core. Optionally wrap your handler in `NewLineSplitterEntryHandler` for splitting (and processing) files into parts based on file-size and newlines.
-
-### AbstractCsvFileEntryHandler
-Implement the abstract method
+## Pre- and post-processing
+Wire `FileEntryHandler` methods 
 
 ```java
-protected CsvLineHandler<T> getHandler(String fileName, ThreadPoolExecutor executor) {
+void beginFileCollection(String name);
+void beginFileEntry(String name);
+void endFileEntry(String name, ThreadPoolExecutor executor);
+void endFileCollection(String name, ThreadPoolExecutor executor);
+FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor);
 ```
 
-to return a specific implementation of `CsvLineHandler` for each file name. 
+for pre- or post-processing. Call the super method wherever it exists. Notice the `ThreadPoolExecutor` which allows for queuing more work.
 
-### CsvLineHandler
-This is a simple interface for handling lines:
-```java
-void handleLine(T line);
-```
+
+## Sesseltjonna CSV parser
+Implement an instance of `CsvLineHandlerFactory` to return specific handlers for each file in the ZIP archive.
+
+Then use the provided adapters to implement a `FileEntryHandler` like in [this example](src/test/java/com/github/skjolber/unzip/TestSesselTjonnaCsvFileEntryHandler.java). 
+
+## Univocity CSV parser
+Implement an instance of `CsvLineHandlerFactory` to return specific handlers for each file in the ZIP archive. Then create a `DefaultUnivocityCsvFileEntryHandler` and pass it to the ZipFileEngine`.
 
 # Details
 The main performance-enhanching functions are
@@ -68,18 +74,7 @@ The main performance-enhanching functions are
 
 ZIP files carry a `central directory` in the end of the file, detailing the name and location of the files within. parallel unzipping works better if the archive is compressed using the DEFLATE compression algorithm - see Apache [commons-compress](https://commons.apache.org/proper/commons-compress/zip.html) for additional details.
 
-## Pre- and post-processing
-Additionally override `AbstractCsvFileEntryHandler` methods 
 
-```java
-void beginFileCollection(String name);
-void beginFileEntry(String name);
-void endFileEntry(String name, ThreadPoolExecutor executor);
-void endFileCollection(String name, ThreadPoolExecutor executor);
-FileChunkSplitter splitFileEntry(final String name, long size); // decide whether to split this file on newline 
-```
-
-for pre- or post-processing. Call the super method wherever it exists. Notice the `ThreadPoolExecutor` which allows for queueing more work.
 ## Benchmarks
 For simple [GTFS feeds] with an archive size of approximately 70 MB, which both unzips and processes file segments in parallel (parsing the CSV file lines), the performance on my laptop (4 cores + hyperthreading) is appoximately 1.5x-2x that of a linear unzip. 
 
@@ -93,8 +88,9 @@ Feel free to connect with me on [LinkedIn], see also my [Github page].
 [Apache 2.0]
 
 # History
- - [1.0.1]: Add support for customized file chunk splitter.
- - [1.0.0]: Initial release.
+ - 1.0.2: Better abstractions for splitting into chunks 
+ - 1.0.1: Add support for customized file chunk splitter.
+ - 1.0.0: Initial release.
 
 [GTFS feeds]:			https://www.entur.org/dev/rutedata/
 [Apache 2.0]: 			http://www.apache.org/licenses/LICENSE-2.0.html
@@ -102,5 +98,4 @@ Feel free to connect with me on [LinkedIn], see also my [Github page].
 [Maven]:				http://maven.apache.org/
 [LinkedIn]:				http://lnkd.in/r7PWDz
 [Github page]:			https://skjolber.github.io
-[1.0.1]:				https://github.com/skjolber/unzip-csv/releases
 [UTF-8]:				https://stackoverflow.com/questions/22257486/iterate-backwards-through-a-utf8-multibyte-string

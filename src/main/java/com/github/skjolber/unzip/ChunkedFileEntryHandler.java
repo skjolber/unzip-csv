@@ -1,7 +1,11 @@
 package com.github.skjolber.unzip;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 public interface ChunkedFileEntryHandler extends FileEntryHandler {
 
-	FileChunkSplitter splitFileEntry(final String name, long size);
-	
+	default FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		return null;
+	}
+
 }

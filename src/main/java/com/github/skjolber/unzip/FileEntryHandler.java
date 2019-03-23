@@ -1,6 +1,5 @@
 package com.github.skjolber.unzip;
 
-import java.io.InputStream;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public interface FileEntryHandler {
@@ -11,7 +10,7 @@ public interface FileEntryHandler {
 	 * @param name name of zip file
 	 */
 	
-	void beginFileCollection(String name);
+	default void beginFileCollection(String name) {}
 	
 	/**
 	 * Begin handling a file entry, i.e. a member of the file collection.
@@ -19,19 +18,21 @@ public interface FileEntryHandler {
 	 * @param name name of file
 	 */
 
-	void beginFileEntry(String name);
-
+	default void beginFileEntry(String name) {}
+	
 	/**
-	 * Handle a file entry
+	 * Get handler for file entry
 	 * 
 	 * @param name name of file
-	 * @param size file size
-	 * @param in file binary stream
+	 * @param size size of file
 	 * @param executor work delegation executor
-	 * @param consume if true, the stream must be consumed in the current thread (not delegated to executor)
-	 * @throws Exception if a problem occurs
+	 * @return handler
+	 * @throws Exception if a problem occored
 	 */
-	void handle(String name, long size, InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception;
+
+	default FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
+		return null;
+	}
 
 	/**
 	 * End handling a file entry
@@ -40,7 +41,7 @@ public interface FileEntryHandler {
 	 * @param executor work delegation executor
 	 */
 	
-	void endFileEntry(String name, ThreadPoolExecutor executor);
+	default void endFileEntry(String name, ThreadPoolExecutor executor) {}
 
 	/**
 	 * End handling a file collection
@@ -49,5 +50,5 @@ public interface FileEntryHandler {
 	 * @param executor work delegation executor
 	 */
 
-	void endFileCollection(String name, ThreadPoolExecutor executor);
+	default void endFileCollection(String name, ThreadPoolExecutor executor) {}
 }
