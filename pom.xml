@@ -55,7 +55,7 @@
 		<univocity-parsers.version>2.7.6</univocity-parsers.version>
 		<commons-compress.version>1.18</commons-compress.version>
 		<commons-io.version>2.6</commons-io.version>
-		<sesseltjonna-csv.version>1.0.1</sesseltjonna-csv.version>
+		<sesseltjonna-csv.version>1.0.10</sesseltjonna-csv.version>
 		
 		<!-- test -->		
 		<junit.version>5.3.1</junit.version>
@@ -88,7 +88,7 @@
 		</dependency>
 		<dependency>
 		    <groupId>com.github.skjolber.sesseltjonna-csv</groupId>
-		    <artifactId>sesseltjonna-csv</artifactId>
+		    <artifactId>databinder</artifactId>
 		    <version>${sesseltjonna-csv.version}</version>
 			<optional>true</optional>
 		</dependency>

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
-import com.github.skjolber.stcsv.CsvReaderConstructor;
+import com.github.skjolber.stcsv.DefaultStaticCsvMapper;
 import com.github.skjolber.unzip.FileEntryHandler;
 
 /**
@@ -19,7 +19,7 @@ import com.github.skjolber.unzip.FileEntryHandler;
 
 public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends AbstractCsvFileEntryHandler<T> {
 
-	protected Map<String, CsvReaderConstructor<T>> constructors = new ConcurrentHashMap<>();
+	protected Map<String, DefaultStaticCsvMapper<T>> constructors = new ConcurrentHashMap<>();
 	protected CsvLineHandlerFactory csvLineHandlerFactory;
 	
 	public AbstractSesselTjonnaCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
@@ -33,7 +33,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends Abstrac
 		
 		Reader reader = new InputStreamReader(in);
 		
-		CsvReaderConstructor<T> mapper = constructors.get(name);
+		DefaultStaticCsvMapper<T> mapper = constructors.get(name);
 		if(mapper == null) {
 			StringBuilder builder = new StringBuilder();
 			
@@ -75,7 +75,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryHandler<T> extends Abstrac
 		}
 	}
 	
-	protected abstract CsvReaderConstructor<T> getReaderConstructor(String header, String name);
+	protected abstract DefaultStaticCsvMapper<T> getReaderConstructor(String header, String name);
 
 	public void handle(CsvLineHandler<T> csvLineHandler, String name, CsvReader<T> reader, ThreadPoolExecutor executor) throws Exception {		
 		do {
