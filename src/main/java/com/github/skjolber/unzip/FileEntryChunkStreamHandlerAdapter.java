@@ -7,12 +7,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandler {
 
-	protected final int chuckLength;
 	protected final FileEntryChunkState fileEntryState;
 	protected final FileEntryChunkStreamHandler delegate;
 	
-	public FileEntryChunkStreamHandlerAdapter(int chuckLength, FileEntryChunkState fileEntryState, FileEntryChunkStreamHandler delegate) {
-		this.chuckLength = chuckLength;
+	public FileEntryChunkStreamHandlerAdapter(FileEntryChunkState fileEntryState, FileEntryChunkStreamHandler delegate) {
 		this.fileEntryState = fileEntryState;
 		this.delegate = delegate;
 	}
@@ -24,57 +22,52 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 
 		FileChunkSplitter fileChunkSplitter = delegate.getFileChunkSplitter();
 
-		byte[] buffer = new byte[Math.min(8192 * 16, chuckLength)];
-
-		ByteArrayOutputStream bout = new ByteArrayOutputStream(chuckLength);
-		
 		int chunkNumber = 0;
 		
+		// for saving the part between max chunk length and actual chunk size
+		ByteArrayOutputStream tail = new ByteArrayOutputStream(); 
+		
 		while(true) {
-			
-			int remaining = chuckLength;
-			
-			int read;
-			do {
-				read = in.read(buffer, 0, Math.min(buffer.length, remaining));
+			// avoid creating extra buffers
+			int nextChunkLength = fileChunkSplitter.getNextChunkLength();
 
+			byte[] buffer = new byte[Math.max(nextChunkLength, tail.size())];
+
+			System.arraycopy(tail.toByteArray(), 0, buffer, 0, tail.size()); // replace by tail.writeBytes(buffer); in java 11
+
+			int offset = tail.size();
+
+			tail.reset();
+			
+			while(nextChunkLength > offset) {
+				int read = in.read(buffer, offset, nextChunkLength - offset);
 				if(read == -1) {
-					break;
-				}
-				
-				remaining -= read;
+					// end of file
+					fileEntryState.increment();
+					
+					handleChunk(new ByteArrayInputStream(buffer, 0, offset), executor, false, chunkNumber);
 
-				bout.write(buffer, 0, read);
-			} while(remaining > 0);
-			
-			final byte[] byteArray = bout.toByteArray();
-			
-			if(read == -1) {
-				// end of file
-				fileEntryState.increment();
-				
-				handleChunk(new ByteArrayInputStream(byteArray), executor, false, chunkNumber);
-				
-				break;
-			} else {
-				int index = fileChunkSplitter.getNextChunkIndex(byteArray, byteArray.length - 1);
-				
-				if(index == -1) {
-					throw new IllegalArgumentException("No newline found in chunk size " + byteArray.length);
+					return;
 				}
-				fileEntryState.increment();
-				
-				handleChunk(new ByteArrayInputStream(byteArray, 0, index), executor, false, chunkNumber);
-
-				// reuse buffer
-				bout.reset();
-				// write tail
-				if(index + 1 < byteArray.length) {
-					bout.write(byteArray, index + 1, byteArray.length - index - 1);
-				}
-				
-				chunkNumber++;
+				offset += read;
 			}
+
+			int index = fileChunkSplitter.getNextChunkIndex(buffer, offset - 1);
+			
+			if(index == -1) {
+				System.out.println(new String(buffer, 0, 1024));
+				throw new IllegalArgumentException("No newline found in chunk size " + offset);
+			}
+			fileEntryState.increment();
+			
+			handleChunk(new ByteArrayInputStream(buffer, 0, index), executor, false, chunkNumber);
+
+			// save tail
+			if(index + 1 < offset) {
+				tail.write(buffer, index + 1, buffer.length - index - 1);
+			}
+			
+			chunkNumber++;
 		}
 	}
 

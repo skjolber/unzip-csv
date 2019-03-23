@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.unzip.ChunkedFileEntryHandler;
-import com.github.skjolber.unzip.DefaultChunkedCsvFileEntryHandler;
 import com.github.skjolber.unzip.FileChunkSplitter;
 import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
@@ -25,7 +24,7 @@ import com.univocity.parsers.csv.CsvParserSettings;
  * 
  */
 
-public class DefaultUnivocityCsvFileEntryHandler extends DefaultChunkedCsvFileEntryHandler {
+public class DefaultUnivocityCsvFileEntryHandler implements ChunkedFileEntryHandler {
 
 	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
 
@@ -119,9 +118,11 @@ public class DefaultUnivocityCsvFileEntryHandler extends DefaultChunkedCsvFileEn
 	}
 
 	protected CsvLineHandlerFactory csvLineHandlerFactory;
+	protected int chunkLength;
 
-	public DefaultUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
+	public DefaultUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory, int chunkLength) {
 		this.csvLineHandlerFactory = csvLineHandlerFactory;
+		this.chunkLength = chunkLength;
 	}
 	
 	public DefaultUnivocityCsvFileEntryHandler() {
@@ -194,7 +195,7 @@ public class DefaultUnivocityCsvFileEntryHandler extends DefaultChunkedCsvFileEn
 	}
 	
 	protected FileChunkSplitter getFileChunkSplitter(String name) {
-		return new NewlineChunkSplitter();
+		return new NewlineChunkSplitter(chunkLength);
 	}
 
 }

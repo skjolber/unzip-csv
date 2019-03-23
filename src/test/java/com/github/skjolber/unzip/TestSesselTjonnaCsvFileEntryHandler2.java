@@ -12,20 +12,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.github.skjolber.stcsv.CsvMapper;
 import com.github.skjolber.stcsv.CsvMapper2;
 import com.github.skjolber.stcsv.CsvReader;
 import com.github.skjolber.stcsv.StaticCsvMapper;
 import com.github.skjolber.stcsv.StaticCsvMapper2;
 import com.github.skjolber.stcsv.builder.CsvBuilderException;
-import com.github.skjolber.unzip.TestSesselTjonnaCsvFileEntryHandler2.Cache;
-import com.github.skjolber.unzip.TestSesselTjonnaCsvFileEntryHandler2.StaticCsvMapperAdapter;
 import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryStreamHandler;
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
 import com.github.skjolber.unzip.csv.Trip;
 
-public class TestSesselTjonnaCsvFileEntryHandler2 extends DefaultChunkedCsvFileEntryHandler {
+public class TestSesselTjonnaCsvFileEntryHandler2 implements ChunkedFileEntryHandler {
 
 	public static class Cache {
 		private Set<String> routes = new HashSet<>();
@@ -187,10 +184,8 @@ public class TestSesselTjonnaCsvFileEntryHandler2 extends DefaultChunkedCsvFileE
 	@Override
 	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
 		if(name.equals("trips.txt")) {
-			return new TripCsvFileEntryChunkStreamHandler(name, StandardCharsets.UTF_8, new NewlineChunkSplitter(), factory, this);
+			return new TripCsvFileEntryChunkStreamHandler(name, StandardCharsets.UTF_8, new NewlineChunkSplitter(16 * 1024 * 1024), factory, this);
 		}
 		throw new RuntimeException();
 	}
-
-
 }

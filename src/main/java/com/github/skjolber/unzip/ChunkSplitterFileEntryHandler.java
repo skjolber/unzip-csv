@@ -15,28 +15,28 @@ public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
 	
 	protected Map<String, FileEntryChunkState> parts = Collections.synchronizedMap(new HashMap<>());
 	
-	protected final int chuckLength; // effective length depends on line lengths
+	protected final int minimumChuckLength;
 	protected final ChunkedFileEntryHandler delegate;
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param chuckLength number of bytes per segment
+	 * @param minimumChuckLength global minimum number of bytes per segment
 	 * @param delegate delegate for forwarding (whole or partial) streams. 
 	 */
 	
-	public ChunkSplitterFileEntryHandler(int chuckLength, ChunkedFileEntryHandler delegate) {
-		this.chuckLength = chuckLength;
+	public ChunkSplitterFileEntryHandler(int minimumChuckLength, ChunkedFileEntryHandler delegate) {
+		this.minimumChuckLength = minimumChuckLength;
 		this.delegate = delegate;
 	}
 
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
-		if(size > chuckLength) {
+		if(size > minimumChuckLength) {
 			FileEntryChunkStreamHandler fileEntryChunkedStreamHandler = delegate.getFileEntryChunkedStreamHandler(name, size, executor);
 			if(fileEntryChunkedStreamHandler != null) {
 				FileEntryChunkState fileEntryState = new FileEntryChunkState(name, this, executor);
 				parts.put(name, fileEntryState);
-				return new FileEntryChunkStreamHandlerAdapter(chuckLength, fileEntryState, fileEntryChunkedStreamHandler);
+				return new FileEntryChunkStreamHandlerAdapter(fileEntryState, fileEntryChunkedStreamHandler);
 			} else {
 				return delegate.getFileEntryStreamHandler(name, size, executor);
 			}

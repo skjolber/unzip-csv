@@ -15,7 +15,7 @@ import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryStreamHandl
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
 import com.github.skjolber.unzip.csv.Trip;
 
-public class TestSesselTjonnaCsvFileEntryHandler extends DefaultChunkedCsvFileEntryHandler {
+public class TestSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHandler {
 
 	protected NoopSesselTjonnaCsvLineHandlerFactory factory = new NoopSesselTjonnaCsvLineHandlerFactory();
 
@@ -119,7 +119,7 @@ public class TestSesselTjonnaCsvFileEntryHandler extends DefaultChunkedCsvFileEn
 	@Override
 	public FileEntryChunkStreamHandler getFileEntryChunkedStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
 		if(name.equals("trips.txt")) {
-			return new TripCsvFileEntryChunkStreamHandler(name, StandardCharsets.UTF_8, new NewlineChunkSplitter(), factory);
+			return new TripCsvFileEntryChunkStreamHandler(name, StandardCharsets.UTF_8, new NewlineChunkSplitter(16 * 1024 * 1024), factory);
 		}
 		throw new RuntimeException();
 	}

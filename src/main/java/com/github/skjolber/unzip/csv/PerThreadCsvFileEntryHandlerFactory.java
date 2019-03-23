@@ -10,8 +10,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.github.skjolber.unzip.csv.CsvLineHandler;
-
 /**
  * Handler cache which limits creating new handlers to one per thread.
  *
@@ -27,6 +25,7 @@ public class PerThreadCsvFileEntryHandlerFactory implements CsvLineHandlerFactor
 		this.factory = factory;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <L> CsvLineHandler<L> getHandler(String fileName, ThreadPoolExecutor executor) {
 
@@ -57,6 +56,7 @@ public class PerThreadCsvFileEntryHandlerFactory implements CsvLineHandlerFactor
 		return result;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <L> List<CsvLineHandler<L>> getHandlers(String fileName) {
 		List<CsvLineHandler<L>> list = new ArrayList<>();
 		

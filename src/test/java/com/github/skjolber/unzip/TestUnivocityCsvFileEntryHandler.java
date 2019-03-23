@@ -8,7 +8,7 @@ import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
 public class TestUnivocityCsvFileEntryHandler extends DefaultUnivocityCsvFileEntryHandler {
 
 	public TestUnivocityCsvFileEntryHandler(CsvLineHandlerFactory csvLineHandlerFactory) {
-		super(csvLineHandlerFactory);
+		super(csvLineHandlerFactory, 16 * 1024 * 1024);
 	}
 
 	@Override
