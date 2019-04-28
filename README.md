@@ -29,7 +29,7 @@ Example dependency config:
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
@@ -88,6 +88,7 @@ Feel free to connect with me on [LinkedIn], see also my [Github page].
 [Apache 2.0]
 
 # History
+ - 1.0.5: Improve waiting logic and error handling
  - 1.0.4: Update dependencies
  - 1.0.2: Better abstractions for splitting into chunks 
  - 1.0.1: Add support for customized file chunk splitter.
