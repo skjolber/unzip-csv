@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.skjolber.unzip-csv</groupId>
 	<artifactId>unzip-csv</artifactId>
-	<version>1.0.5-SNAPSHOT</version>
+	<version>1.0.5</version>
 
 	<name>unzip-csv</name>
 	<description>Project for unzipping CSV files</description>
@@ -32,7 +32,7 @@
 		<connection>scm:git:git@github.com:skjolber/unzip-csv.git</connection>
 		<developerConnection>scm:git:git@github.com:skjolber/unzip-csv.git</developerConnection>
 		<url>git@github.com:skjolber/unzip-csv.git</url>
-		<tag>HEAD</tag>
+		<tag>unzip-csv-1.0.5</tag>
 	</scm>
 
 	<issueManagement>
