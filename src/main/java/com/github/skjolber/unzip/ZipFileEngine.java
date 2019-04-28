@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,8 +31,6 @@ public class ZipFileEngine implements UncaughtExceptionHandler {
 		super();
 		this.handler = handler;
 		this.executor = executor;
-		
-		executor.setThreadFactory(new UncaughtExceptionHandlerThreadFactory(executor.getThreadFactory(), this));
 	}
 
 	public boolean handle(ZipFileSource source) throws IOException {
@@ -39,7 +38,6 @@ public class ZipFileEngine implements UncaughtExceptionHandler {
 	}
 
 	public boolean handle(ZipFileSource source, List<String> files) throws IOException {
-		
 		AtomicInteger counter = new AtomicInteger();
 		
 		List<String> targetFiles;
@@ -58,31 +56,37 @@ public class ZipFileEngine implements UncaughtExceptionHandler {
 			targetFiles = files;
 		}
 		
-		handler.beginFileCollection(null);
-		for(int i = 0; i < executor.getMaximumPoolSize(); i++) {
-			ZipFile z = source.getZipFile();
+		// wrap exception handler to detect errors
+		ThreadFactory threadFactory = executor.getThreadFactory();
+		executor.setThreadFactory(new UncaughtExceptionHandlerThreadFactory(threadFactory, this));
+		try {
+			handler.beginFileCollection(null);
+			for(int i = 0; i < executor.getMaximumPoolSize(); i++) {
+				ZipFile z = source.getZipFile();
+				executor.execute(new ZipFileProcessor(counter, targetFiles, z, handler, executor));
+			}
 			
-			executor.execute(new ZipFileProcessor(counter, targetFiles, z, handler, executor));
+			while (executor.getActiveCount() > 0 || !executor.getQueue().isEmpty()) {
+				try {
+					Thread.sleep(20);
+				} catch (InterruptedException e) {
+					break;
+				}
+	        }
+			handler.endFileCollection(null, executor);
+			
+			while (executor.getActiveCount() > 0 || !executor.getQueue().isEmpty()) {
+				try {
+					Thread.sleep(20);
+				} catch (InterruptedException e) {
+					break;
+				}
+	        }
+			
+			return uncaughtException == null;
+		} finally {
+			executor.setThreadFactory(threadFactory);
 		}
-		
-		while (executor.getActiveCount() > 0) {
-			try {
-				Thread.sleep(20);
-			} catch (InterruptedException e) {
-				break;
-			}
-        }
-		handler.endFileCollection(null, executor);
-		
-		while (executor.getActiveCount() > 0) {
-			try {
-				Thread.sleep(20);
-			} catch (InterruptedException e) {
-				break;
-			}
-        }
-		
-		return uncaughtException == null;
 	}
 	
 	public void close() {
@@ -91,7 +95,7 @@ public class ZipFileEngine implements UncaughtExceptionHandler {
 
 	@Override
 	public void uncaughtException(Thread t, Throwable e) {
-		this.uncaughtException = uncaughtException;
+		this.uncaughtException = e;
 	}
 	
 	public void reset() {
