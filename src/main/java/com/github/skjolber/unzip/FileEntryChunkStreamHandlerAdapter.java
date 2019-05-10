@@ -55,8 +55,7 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 			int index = fileChunkSplitter.getNextChunkIndex(buffer, offset - 1);
 			
 			if(index == -1) {
-				System.out.println(new String(buffer, 0, 1024));
-				throw new IllegalArgumentException("No newline found in chunk size " + offset);
+				throw new IllegalArgumentException("No newline found in chunk size " + offset + ": " + new String(buffer, 0, 1024));
 			}
 			fileEntryState.increment();
 			
