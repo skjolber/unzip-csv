@@ -40,9 +40,10 @@ public class ZipFileProcessor implements Runnable {
 							handler.beginFileEntry(name);
 							FileEntryStreamHandler fileEntryStreamHandler = handler.getFileEntryStreamHandler(name, ze.getSize(), executor);
 							if(fileEntryStreamHandler != null) {
-								fileEntryStreamHandler.handle(zin, executor, true);
+								fileEntryStreamHandler.handle(zin, true, handler, executor);
+							} else {
+								handler.endFileEntry(name, executor);
 							}
-							handler.endFileEntry(name, executor);
 						} catch (Exception e) {
 							throw new RuntimeException("Problem parsing " + name, e);
 						} finally {

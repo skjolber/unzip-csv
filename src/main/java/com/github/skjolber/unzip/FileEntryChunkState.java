@@ -3,7 +3,7 @@ package com.github.skjolber.unzip;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FileEntryChunkState {
+public class FileEntryChunkState implements FileEntryHandler {
 	
 	private AtomicInteger count = new AtomicInteger(0);
 	protected volatile boolean ended = false;
@@ -31,6 +31,10 @@ public class FileEntryChunkState {
 				endFileEntry();
 			}
 		}
+	}
+	
+	public void endFileEntry(String name, ThreadPoolExecutor executor) {
+		decrement();
 	}
 	
 	private void endFileEntry() {
@@ -72,4 +76,6 @@ public class FileEntryChunkState {
 	public boolean isNotified() {
 		return notified;
 	}
+	
+	
 }

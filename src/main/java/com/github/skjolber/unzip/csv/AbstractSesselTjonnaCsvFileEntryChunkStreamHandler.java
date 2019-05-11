@@ -11,6 +11,7 @@ import com.github.skjolber.stcsv.CsvReader;
 import com.github.skjolber.stcsv.StaticCsvMapper;
 import com.github.skjolber.unzip.FileChunkSplitter;
 import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
+import com.github.skjolber.unzip.FileEntryHandler;
 
 public abstract class AbstractSesselTjonnaCsvFileEntryChunkStreamHandler<T> implements FileEntryChunkStreamHandler {
 
@@ -39,10 +40,12 @@ public abstract class AbstractSesselTjonnaCsvFileEntryChunkStreamHandler<T> impl
 	}
 
 	@Override
-	public void handleChunk(InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception {
+	public void handleChunk(InputStream in, int chunkNumber, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
 		CsvLineHandler<T> handler = csvLineHandlerFactory.getHandler(name, executor);
 		if(handler != null) {
-			handle(mapper.newInstance(new InputStreamReader(in, charset)), handler, executor);
+			handle(mapper.newInstance(new InputStreamReader(in, charset)), handler, fileEntryHandler, executor);
+		} else {
+			fileEntryHandler.endFileEntry(name, executor);
 		}
 	}
 
@@ -65,7 +68,7 @@ public abstract class AbstractSesselTjonnaCsvFileEntryChunkStreamHandler<T> impl
 	
 	protected abstract StaticCsvMapper<T> createStaticCsvMapper(String firstLine) throws Exception;
 
-	protected void handle(CsvReader<T> reader, CsvLineHandler<T> handler, ThreadPoolExecutor executor) throws Exception {
+	protected void handle(CsvReader<T> reader, CsvLineHandler<T> handler, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
 		do {
 			T value = reader.next();
 			if(value == null) {
@@ -73,6 +76,8 @@ public abstract class AbstractSesselTjonnaCsvFileEntryChunkStreamHandler<T> impl
 			}
 			handler.handleLine(value);
 		} while(true);
+		
+		fileEntryHandler.endFileEntry(name, executor);
 	}
 
 }

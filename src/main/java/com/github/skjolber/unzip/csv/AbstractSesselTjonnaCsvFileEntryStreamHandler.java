@@ -1,31 +1,67 @@
 package com.github.skjolber.unzip.csv;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
+import com.github.skjolber.unzip.FileEntryHandler;
 import com.github.skjolber.unzip.FileEntryStreamHandler;
 
 public abstract class AbstractSesselTjonnaCsvFileEntryStreamHandler<T> implements FileEntryStreamHandler {
 
 	protected final String name;
 	protected final CsvLineHandlerFactory csvLineHandlerFactory;
-	
-	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory) {
+	protected final long size;
+	protected final boolean parallel;
+
+	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size) {
+		this(name, csvLineHandlerFactory, size, false);
+	}
+
+	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, boolean parallel) {
 		super();
 		this.name = name;
 		this.csvLineHandlerFactory = csvLineHandlerFactory;
+		this.size = size;
+		this.parallel = parallel;
 	}
 
 	@Override
-	public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
+	public void handle(InputStream in, boolean consume, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
 		CsvLineHandler<T> handler = csvLineHandlerFactory.getHandler(name, executor);
 		if(handler != null) {
-			handle(createCsvReader(in), handler, executor);
+			Reader reader = createReader(in);
+			if(parallel && executor.getCorePoolSize() > 1) {
+				// handle the reader in this thread, queue the csv parser itself in another job
+				ParallelReader parallelReader = new ParallelReader(reader, Math.min((int)size, 64 * 1024 * 1024));
+				handleParalell(parallelReader, handler, fileEntryHandler, executor);
+				parallelReader.getRunnable().run(); // consume input now
+			} else {
+				handle(createCsvReader(reader, executor), handler, fileEntryHandler, executor);
+			}
 		}
 	}
 
-	protected void handle(CsvReader<T> reader, CsvLineHandler<T> handler, ThreadPoolExecutor executor) throws Exception {
+	protected void handleParalell(Reader reader, CsvLineHandler<T> handler, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
+		executor.execute(new Runnable() {
+			public void run() {
+				try {
+					handle(createCsvReader(reader, executor), handler, fileEntryHandler, executor);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		});
+	}	
+	
+	protected Reader createReader(InputStream in) {
+		return new InputStreamReader(in, StandardCharsets.UTF_8);
+	}
+
+	protected void handle(CsvReader<T> reader, CsvLineHandler<T> handler, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
 		do {
 			T value = reader.next();
 			if(value == null) {
@@ -33,8 +69,10 @@ public abstract class AbstractSesselTjonnaCsvFileEntryStreamHandler<T> implement
 			}
 			handler.handleLine(value);
 		} while(true);
+		
+		fileEntryHandler.endFileEntry(name, executor);
 	}
 
-	protected abstract CsvReader<T> createCsvReader(InputStream in) throws Exception;
+	protected abstract CsvReader<T> createCsvReader(Reader reader, ThreadPoolExecutor executor) throws Exception;
 
 }

@@ -18,11 +18,12 @@ public interface FileEntryChunkStreamHandler {
 	 * Handle a file entry chunk
 	 * 
 	 * @param in file binary stream
-	 * @param executor work delegation executor
 	 * @param chunkNumber chunk number (0 ... n) 
+	 * @param fileEntryHandler 
+	 * @param executor work delegation executor
 	 * @throws Exception if a problem occurs
 	 */
 
-	void handleChunk(InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception;
+	void handleChunk(InputStream in, int chunkNumber, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception;
 	
 }

@@ -16,7 +16,7 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 	}
 
 	@Override
-	public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
+	public void handle(InputStream in, boolean consume, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
 		
 		delegate.initialize(in, executor);
 
@@ -45,7 +45,7 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 					// end of file
 					fileEntryState.increment();
 					
-					handleChunk(new ByteArrayInputStream(buffer, 0, offset), executor, false, chunkNumber);
+					handleChunk(new ByteArrayInputStream(buffer, 0, offset), executor, false, chunkNumber, fileEntryState);
 
 					return;
 				}
@@ -59,7 +59,7 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 			}
 			fileEntryState.increment();
 			
-			handleChunk(new ByteArrayInputStream(buffer, 0, index), executor, false, chunkNumber);
+			handleChunk(new ByteArrayInputStream(buffer, 0, index), executor, false, chunkNumber, fileEntryState);
 
 			// save tail
 			if(index + 1 < offset) {
@@ -70,13 +70,11 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 		}
 	}
 
-	protected void handleChunk(InputStream in, ThreadPoolExecutor executor, boolean consume, int chunkNumber) throws Exception {
+	protected void handleChunk(InputStream in, ThreadPoolExecutor executor, boolean consume, int chunkNumber, FileEntryHandler fileEntryHandler) throws Exception {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					delegate.handleChunk(in, executor, chunkNumber);
-
-					fileEntryState.decrement();
+					delegate.handleChunk(in, chunkNumber, fileEntryHandler, executor);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}

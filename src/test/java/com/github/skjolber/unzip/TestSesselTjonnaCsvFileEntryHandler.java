@@ -2,6 +2,7 @@ package com.github.skjolber.unzip;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -60,13 +61,13 @@ public class TestSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHand
 
 	private static class TripCsvFileEntryStreamHandler extends AbstractSesselTjonnaCsvFileEntryStreamHandler<Trip> {
 
-		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory) {
-			super(name, csvLineHandlerFactory);
+		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size) {
+			super(name, csvLineHandlerFactory, size);
 		}
 
 		@Override
-		protected CsvReader<Trip> createCsvReader(InputStream in) throws Exception {
-			return plain.create(new InputStreamReader(in, StandardCharsets.UTF_8));
+		protected CsvReader<Trip> createCsvReader(Reader in, ThreadPoolExecutor executor) throws Exception {
+			return plain.create(in);
 		}
 		
 	}
@@ -111,7 +112,7 @@ public class TestSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHand
 	@Override
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
 		if(name.equals("trips.txt")) {
-			return new TripCsvFileEntryStreamHandler(name, factory);
+			return new TripCsvFileEntryStreamHandler(name, factory, size);
 		}
 		throw new RuntimeException();
 	}

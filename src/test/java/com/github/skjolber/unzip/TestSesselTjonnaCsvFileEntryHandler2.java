@@ -111,15 +111,15 @@ public class TestSesselTjonnaCsvFileEntryHandler2 implements ChunkedFileEntryHan
 
 		private TestSesselTjonnaCsvFileEntryHandler2 cacheFactory;
 		
-		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, TestSesselTjonnaCsvFileEntryHandler2 cacheFactory) {
-			super(name, csvLineHandlerFactory);
+		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, TestSesselTjonnaCsvFileEntryHandler2 cacheFactory, long size) {
+			super(name, csvLineHandlerFactory, size);
 			
 			this.cacheFactory = cacheFactory;
 		}
 
 		@Override
-		protected CsvReader<Trip> createCsvReader(InputStream in) throws Exception {
-			return plain.create(new InputStreamReader(in, StandardCharsets.UTF_8), cacheFactory.getCache());
+		protected CsvReader<Trip> createCsvReader(Reader reader, ThreadPoolExecutor executor) throws Exception {
+			return plain.create(reader, cacheFactory.getCache());
 		}
 		
 	}
@@ -176,7 +176,7 @@ public class TestSesselTjonnaCsvFileEntryHandler2 implements ChunkedFileEntryHan
 	@Override
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
 		if(name.equals("trips.txt")) {
-			return new TripCsvFileEntryStreamHandler(name, factory, this);
+			return new TripCsvFileEntryStreamHandler(name, factory, this, size);
 		}
 		throw new RuntimeException();
 	}

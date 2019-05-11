@@ -36,7 +36,7 @@ public class DefaultUnivocityCsvFileEntryHandler implements ChunkedFileEntryHand
 		}
 
 		@Override
-		public void handle(InputStream in, ThreadPoolExecutor executor, boolean consume) throws Exception {
+		public void handle(InputStream in, boolean consume, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
 			CsvParser reader = createCsvParser(in);
 			
 			String[] header = reader.parseNext();
@@ -52,6 +52,8 @@ public class DefaultUnivocityCsvFileEntryHandler implements ChunkedFileEntryHand
 			} else {
 				// ignore
 			}
+			
+			fileEntryHandler.endFileEntry(name, executor);
 		}
 		
 	}
@@ -88,13 +90,14 @@ public class DefaultUnivocityCsvFileEntryHandler implements ChunkedFileEntryHand
 		}
 
 		@Override
-		public void handleChunk(InputStream in, ThreadPoolExecutor executor, int chunkNumber) throws Exception {
+		public void handleChunk(InputStream in, int chunkNumber, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
 			CsvLineHandler<Map<String, String>> csvLineHandler = csvLineHandlerFactory.getHandler(name, executor);
 			if(csvLineHandler != null) {
 				CsvParser reader = createCsvParser(in);
 
 				handle(csvLineHandler, reader, headers, executor);
 			}
+			fileEntryHandler.endFileEntry(name, executor);
 		}
 
 		public ByteArrayOutputStream getFirstLine(InputStream in) throws IOException {
@@ -191,7 +194,7 @@ public class DefaultUnivocityCsvFileEntryHandler implements ChunkedFileEntryHand
 			} while(true);
 		} finally {
 			reader.stopParsing();
-		}		
+		}
 	}
 	
 	protected FileChunkSplitter getFileChunkSplitter(String name) {
