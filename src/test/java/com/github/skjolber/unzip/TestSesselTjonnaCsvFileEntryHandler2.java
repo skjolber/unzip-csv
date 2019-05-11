@@ -111,8 +111,8 @@ public class TestSesselTjonnaCsvFileEntryHandler2 implements ChunkedFileEntryHan
 
 		private TestSesselTjonnaCsvFileEntryHandler2 cacheFactory;
 		
-		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, TestSesselTjonnaCsvFileEntryHandler2 cacheFactory, long size) {
-			super(name, csvLineHandlerFactory, size);
+		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, TestSesselTjonnaCsvFileEntryHandler2 cacheFactory, long size, FileEntryHandler delegate, ThreadPoolExecutor executor) {
+			super(name, csvLineHandlerFactory, size, delegate, executor);
 			
 			this.cacheFactory = cacheFactory;
 		}
@@ -176,7 +176,7 @@ public class TestSesselTjonnaCsvFileEntryHandler2 implements ChunkedFileEntryHan
 	@Override
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
 		if(name.equals("trips.txt")) {
-			return new TripCsvFileEntryStreamHandler(name, factory, this, size);
+			return new TripCsvFileEntryStreamHandler(name, factory, this, size, this, executor);
 		}
 		throw new RuntimeException();
 	}

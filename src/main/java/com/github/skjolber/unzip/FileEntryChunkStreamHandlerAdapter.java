@@ -9,14 +9,16 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 
 	protected final FileEntryChunkState fileEntryState;
 	protected final FileEntryChunkStreamHandler delegate;
+	protected final ThreadPoolExecutor executor;
 	
-	public FileEntryChunkStreamHandlerAdapter(FileEntryChunkState fileEntryState, FileEntryChunkStreamHandler delegate) {
+	public FileEntryChunkStreamHandlerAdapter(FileEntryChunkState fileEntryState, FileEntryChunkStreamHandler delegate, ThreadPoolExecutor executor) {
 		this.fileEntryState = fileEntryState;
 		this.delegate = delegate;
+		this.executor = executor;
 	}
 
 	@Override
-	public void handle(InputStream in, boolean consume, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
+	public void handle(InputStream in, boolean consume) throws Exception {
 		
 		delegate.initialize(in, executor);
 

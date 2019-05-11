@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
+import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
 import com.github.skjolber.unzip.FileEntryStreamHandler;
 
@@ -16,21 +17,25 @@ public abstract class AbstractSesselTjonnaCsvFileEntryStreamHandler<T> implement
 	protected final CsvLineHandlerFactory csvLineHandlerFactory;
 	protected final long size;
 	protected final boolean parallel;
+	protected final FileEntryHandler fileEntryHandler;
+	protected final ThreadPoolExecutor executor;
 
-	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size) {
-		this(name, csvLineHandlerFactory, size, false);
+	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, FileEntryHandler delegate, ThreadPoolExecutor executor) {
+		this(name, csvLineHandlerFactory, size, false, delegate, executor);
 	}
 
-	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, boolean parallel) {
+	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, boolean parallel, FileEntryHandler delegate, ThreadPoolExecutor executor) {
 		super();
 		this.name = name;
 		this.csvLineHandlerFactory = csvLineHandlerFactory;
 		this.size = size;
 		this.parallel = parallel;
+		this.fileEntryHandler = delegate;
+		this.executor = executor;
 	}
 
 	@Override
-	public void handle(InputStream in, boolean consume, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
+	public void handle(InputStream in, boolean consume) throws Exception {
 		CsvLineHandler<T> handler = csvLineHandlerFactory.getHandler(name, executor);
 		if(handler != null) {
 			Reader reader = createReader(in);

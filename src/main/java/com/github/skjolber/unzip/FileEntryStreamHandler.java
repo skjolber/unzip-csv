@@ -13,6 +13,6 @@ public interface FileEntryStreamHandler {
 	 * @param executor work delegation executor
 	 * @throws Exception if a problem occurs
 	 */
-	void handle(InputStream in, boolean consume, FileEntryHandler listener, ThreadPoolExecutor executor) throws Exception;
+	void handle(InputStream in, boolean consume) throws Exception;
 
 }

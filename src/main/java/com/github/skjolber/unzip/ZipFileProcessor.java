@@ -40,7 +40,7 @@ public class ZipFileProcessor implements Runnable {
 							handler.beginFileEntry(name);
 							FileEntryStreamHandler fileEntryStreamHandler = handler.getFileEntryStreamHandler(name, ze.getSize(), executor);
 							if(fileEntryStreamHandler != null) {
-								fileEntryStreamHandler.handle(zin, true, handler, executor);
+								fileEntryStreamHandler.handle(zin, true);
 							} else {
 								handler.endFileEntry(name, executor);
 							}

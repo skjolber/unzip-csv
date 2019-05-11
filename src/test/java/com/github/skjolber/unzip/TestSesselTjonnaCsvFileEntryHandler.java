@@ -61,8 +61,8 @@ public class TestSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHand
 
 	private static class TripCsvFileEntryStreamHandler extends AbstractSesselTjonnaCsvFileEntryStreamHandler<Trip> {
 
-		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size) {
-			super(name, csvLineHandlerFactory, size);
+		public TripCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, FileEntryHandler delegate, ThreadPoolExecutor executor) {
+			super(name, csvLineHandlerFactory, size, delegate, executor);
 		}
 
 		@Override
@@ -112,7 +112,7 @@ public class TestSesselTjonnaCsvFileEntryHandler implements ChunkedFileEntryHand
 	@Override
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
 		if(name.equals("trips.txt")) {
-			return new TripCsvFileEntryStreamHandler(name, factory, size);
+			return new TripCsvFileEntryStreamHandler(name, factory, size, this, executor);
 		}
 		throw new RuntimeException();
 	}

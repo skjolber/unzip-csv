@@ -29,14 +29,18 @@ public class DefaultUnivocityCsvFileEntryHandler implements ChunkedFileEntryHand
 	protected class CsvFileEntryStreamHandler implements FileEntryStreamHandler {
 
 		protected final String name;
+		protected final FileEntryHandler fileEntryHandler;
+		protected final ThreadPoolExecutor executor;
 		
-		public CsvFileEntryStreamHandler(String name) {
+		public CsvFileEntryStreamHandler(String name, FileEntryHandler delegate, ThreadPoolExecutor executor) {
 			super();
 			this.name = name;
+			this.fileEntryHandler = delegate;
+			this.executor = executor;
 		}
 
 		@Override
-		public void handle(InputStream in, boolean consume, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
+		public void handle(InputStream in, boolean consume) throws Exception {
 			CsvParser reader = createCsvParser(in);
 			
 			String[] header = reader.parseNext();
@@ -133,7 +137,7 @@ public class DefaultUnivocityCsvFileEntryHandler implements ChunkedFileEntryHand
 
 	@Override
 	public FileEntryStreamHandler getFileEntryStreamHandler(String name, long size, ThreadPoolExecutor executor) throws Exception {
-		return new CsvFileEntryStreamHandler(name);
+		return new CsvFileEntryStreamHandler(name, this, executor);
 	}
 
 	@Override

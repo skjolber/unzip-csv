@@ -36,7 +36,7 @@ public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
 			if(fileEntryChunkedStreamHandler != null) {
 				FileEntryChunkState fileEntryState = new FileEntryChunkState(name, this, executor);
 				parts.put(name, fileEntryState);
-				return new FileEntryChunkStreamHandlerAdapter(fileEntryState, fileEntryChunkedStreamHandler);
+				return new FileEntryChunkStreamHandlerAdapter(fileEntryState, fileEntryChunkedStreamHandler, executor);
 			} else {
 				return delegate.getFileEntryStreamHandler(name, size, executor);
 			}
