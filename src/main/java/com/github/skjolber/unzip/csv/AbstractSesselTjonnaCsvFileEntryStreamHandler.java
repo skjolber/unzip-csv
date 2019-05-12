@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
-import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;
 import com.github.skjolber.unzip.FileEntryStreamHandler;
 
@@ -15,22 +14,20 @@ public abstract class AbstractSesselTjonnaCsvFileEntryStreamHandler<T> implement
 
 	protected final String name;
 	protected final CsvLineHandlerFactory csvLineHandlerFactory;
-	protected final long size;
-	protected final boolean parallel;
+	protected final long parallelBufferSize;
 	protected final FileEntryHandler fileEntryHandler;
 	protected final ThreadPoolExecutor executor;
 
-	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, FileEntryHandler delegate, ThreadPoolExecutor executor) {
-		this(name, csvLineHandlerFactory, size, false, delegate, executor);
+	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) {
+		this(name, csvLineHandlerFactory, -1L, fileEntryHandler, executor);
 	}
 
-	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, boolean parallel, FileEntryHandler delegate, ThreadPoolExecutor executor) {
+	public AbstractSesselTjonnaCsvFileEntryStreamHandler(String name, CsvLineHandlerFactory csvLineHandlerFactory, long size, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) {
 		super();
 		this.name = name;
 		this.csvLineHandlerFactory = csvLineHandlerFactory;
-		this.size = size;
-		this.parallel = parallel;
-		this.fileEntryHandler = delegate;
+		this.parallelBufferSize = size;
+		this.fileEntryHandler = fileEntryHandler;
 		this.executor = executor;
 	}
 
@@ -39,27 +36,30 @@ public abstract class AbstractSesselTjonnaCsvFileEntryStreamHandler<T> implement
 		CsvLineHandler<T> handler = csvLineHandlerFactory.getHandler(name, executor);
 		if(handler != null) {
 			Reader reader = createReader(in);
-			if(parallel && executor.getCorePoolSize() > 1) {
-				// handle the reader in this thread, queue the csv parser itself in another job
-				ParallelReader parallelReader = new ParallelReader(reader, Math.min((int)size, 64 * 1024 * 1024));
-				handleParalell(parallelReader, handler, fileEntryHandler, executor);
-				parallelReader.getRunnable().run(); // consume input now
+			if(parallelBufferSize != -1L) {
+				// read the stream in this thread, queue the CSV parser itself in another job
+				// note: the parallel buffer size must be as big as the whole file in order to prevent 
+				// deadlocks
+				Runnable r = handleParallel(reader, handler, fileEntryHandler, executor);
+				r.run(); // consume input now
 			} else {
 				handle(createCsvReader(reader, executor), handler, fileEntryHandler, executor);
 			}
 		}
 	}
 
-	protected void handleParalell(Reader reader, CsvLineHandler<T> handler, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
+	protected Runnable handleParallel(Reader reader, CsvLineHandler<T> handler, FileEntryHandler fileEntryHandler, ThreadPoolExecutor executor) throws Exception {
+		ParallelReader parallelReader = new ParallelReader(reader, (int)parallelBufferSize);
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					handle(createCsvReader(reader, executor), handler, fileEntryHandler, executor);
+					handle(createCsvReader(parallelReader, executor), handler, fileEntryHandler, executor);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
 			}
 		});
+		return parallelReader.getRunnable();
 	}	
 	
 	protected Reader createReader(InputStream in) {

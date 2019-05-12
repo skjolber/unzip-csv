@@ -55,9 +55,8 @@ public class ChunkSplitterFileEntryHandler implements FileEntryHandler {
 		FileEntryChunkState fileEntryState = parts.remove(name);
 		if(fileEntryState != null) {
 			fileEntryState.ended();
-		} else {
-			delegate.endFileEntry(name, executor);
 		}
+		delegate.endFileEntry(name, executor);
 	}
 
 	@Override

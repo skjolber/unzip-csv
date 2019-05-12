@@ -49,6 +49,8 @@ public class FileEntryChunkStreamHandlerAdapter implements FileEntryStreamHandle
 					
 					handleChunk(new ByteArrayInputStream(buffer, 0, offset), executor, false, chunkNumber, fileEntryState);
 
+					fileEntryState.ended();
+					
 					return;
 				}
 				offset += read;

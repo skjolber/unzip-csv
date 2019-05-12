@@ -5,7 +5,7 @@ import java.io.Reader;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Parallel stream reader. 
+ * Parallel stream reader. This serves as an alternative way to processes using multiple threads. 
  * <br><br>
  * Adapted from https://github.com/arnaudroger/SimpleFlatMapper
  * 
@@ -50,7 +50,6 @@ public class ParallelReader extends Reader {
     /**
      * Create a new ParallelReader.
      * @param reader the reader
-     * @param executorService the executor to fetch from
      * @param bufferSize the size of the ring buffer
      * @param readBufferSize the size of the buffer to fetch data
      * @param waitingStrategy the waiting strategy when the ring buffer is full
