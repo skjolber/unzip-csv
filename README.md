@@ -96,6 +96,7 @@ Other high-performance CSV parsers:
  * [Univocity-parsers](https://github.com/uniVocity/univocity-parsers)
 
 # History
+ - 1.0.7: Add optional Parallel reader (from SimpleFlatMapper project).   
  - 1.0.5: Improve waiting logic and error handling
  - 1.0.4: Update dependencies
  - 1.0.2: Better abstractions for splitting into chunks 
