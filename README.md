@@ -17,6 +17,8 @@ Cutting files into segments (based on newline) assumes that
  * line order is not important,
  * newlines can be decoded from reading the file backwards - this is true for popular character encodings like [UTF-8], ASCII and ISO-8859-1. 
  * CSV entries are without linebreaks; not even linebreak wrapped in quotes.
+ 
+If cutting into segments is not possible then using a [parallel reader](src/main/java/com/github/skjolber/unzip/csv/ParallelReader.java) is also an option; effectively decoding to characters and parsing in parallel.
 
 Bugs, feature suggestions and help requests can be filed with the [issue-tracker].
 
@@ -28,8 +30,8 @@ Example dependency config:
 ```xml
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
-    <artifactId>core</artifactId>
-    <version>1.0.5</version>
+    <artifactId>unzip-csv</artifactId>
+    <version>1.0.7</version>
 </dependency>
 ```
 
@@ -86,6 +88,12 @@ If you have any questions or comments, please email me at thomas.skjolberg@gmail
 Feel free to connect with me on [LinkedIn], see also my [Github page].
 ## License
 [Apache 2.0]
+
+## Links
+Other high-performance CSV parsers:
+
+ * [SimpleFlatMapper](https://simpleflatmapper.org/)
+ * [Univocity-parsers](https://github.com/uniVocity/univocity-parsers)
 
 # History
  - 1.0.5: Improve waiting logic and error handling
