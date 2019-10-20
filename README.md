@@ -31,7 +31,7 @@ Example dependency config:
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
     <artifactId>unzip-csv</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
 </dependency>
 ```
 
@@ -96,6 +96,7 @@ Other high-performance CSV parsers:
  * [Univocity-parsers](https://github.com/uniVocity/univocity-parsers)
 
 # History
+ - 1.0.8: Automatic module name for JDK9+.
  - 1.0.7: Add optional Parallel reader (from SimpleFlatMapper project).   
  - 1.0.5: Improve waiting logic and error handling
  - 1.0.4: Update dependencies
