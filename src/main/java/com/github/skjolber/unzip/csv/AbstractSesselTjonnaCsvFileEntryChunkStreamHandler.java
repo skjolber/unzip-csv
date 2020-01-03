@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.github.skjolber.stcsv.CsvReader;
-import com.github.skjolber.stcsv.StaticCsvMapper;
+import com.github.skjolber.stcsv.databinder.StaticCsvMapper;
 import com.github.skjolber.unzip.FileChunkSplitter;
 import com.github.skjolber.unzip.FileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.FileEntryHandler;

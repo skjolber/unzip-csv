@@ -2,8 +2,8 @@ package com.github.skjolber.unzip;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.github.skjolber.unzip.csv.DefaultUnivocityCsvFileEntryHandler;
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
+import com.github.skjolber.unzip.csv.DefaultUnivocityCsvFileEntryHandler;
 
 public class TestUnivocityCsvFileEntryHandler extends DefaultUnivocityCsvFileEntryHandler {
 

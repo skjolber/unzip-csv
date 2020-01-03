@@ -1,16 +1,14 @@
 package com.github.skjolber.unzip;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.github.skjolber.stcsv.CsvMapper;
 import com.github.skjolber.stcsv.CsvReader;
-import com.github.skjolber.stcsv.StaticCsvMapper;
 import com.github.skjolber.stcsv.builder.CsvBuilderException;
+import com.github.skjolber.stcsv.databinder.CsvMapper;
+import com.github.skjolber.stcsv.databinder.StaticCsvMapper;
 import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryChunkStreamHandler;
 import com.github.skjolber.unzip.csv.AbstractSesselTjonnaCsvFileEntryStreamHandler;
 import com.github.skjolber.unzip.csv.CsvLineHandlerFactory;
