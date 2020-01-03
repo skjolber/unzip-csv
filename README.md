@@ -31,7 +31,7 @@ Example dependency config:
 <dependency>
     <groupId>com.github.skjolber.unzip-csv</groupId>
     <artifactId>unzip-csv</artifactId>
-    <version>1.0.8</version>
+    <version>1.0.9</version>
 </dependency>
 ```
 
@@ -96,13 +96,9 @@ Other high-performance CSV parsers:
  * [Univocity-parsers](https://github.com/uniVocity/univocity-parsers)
 
 # History
+ - 1.0.9: Update CSV parsers
  - 1.0.8: Automatic module name for JDK9+.
- - 1.0.7: Add optional Parallel reader (from SimpleFlatMapper project).   
- - 1.0.5: Improve waiting logic and error handling
- - 1.0.4: Update dependencies
- - 1.0.2: Better abstractions for splitting into chunks 
- - 1.0.1: Add support for customized file chunk splitter.
- - 1.0.0: Initial release.
+ - 1.0.7: Add optional Parallel reader (from SimpleFlatMapper project).
 
 [GTFS feeds]:			https://www.entur.org/dev/rutedata/
 [Apache 2.0]: 			http://www.apache.org/licenses/LICENSE-2.0.html
