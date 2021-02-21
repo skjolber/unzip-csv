@@ -33,6 +33,8 @@ jobs:
       if: steps.maven-cache.outputs.cache-hit != 'true'
     - name: Adjust memory use for Maven
       run: echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=256m'" >> ~/.mavenrc
+    - name: Cat mavenrc
+      run: cat ~/.mavenrc
     - name: Build with Maven
       run: mvn verify
 
