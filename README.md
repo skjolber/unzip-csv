@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/skjolber/unzip-csv.svg)](https://travis-ci.org/skjolber/unzip-csv)
-
 # unzip-csv
 High-performance (i.e. multi-threaded) unpacking and processing of CSV files directly from ZIP archives.
 
