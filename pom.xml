@@ -59,7 +59,7 @@
 		
 		<!-- test -->		
 		<junit.version>5.7.1</junit.version>
-		<spring.version>2.2.3.RELEASE</spring.version>
+		<spring.version>2.6.5</spring.version>
 
 		<!-- plugins -->
 		<build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
