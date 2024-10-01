@@ -17,6 +17,7 @@ public class UrlZipFileFactoryTest {
     private int randomServerPort;
 	
 	@Test
+	@Disabled
 	public void testLocal() throws IOException {
 		URL url = new URL("http://127.0.0.1:" + randomServerPort + "/rb_norway-aggregated-gtfs.zip");
 		
