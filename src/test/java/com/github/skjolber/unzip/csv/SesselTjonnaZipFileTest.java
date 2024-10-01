@@ -1,7 +1,5 @@
 package com.github.skjolber.unzip.csv;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +12,8 @@ import com.github.skjolber.unzip.FileZipFileFactory;
 import com.github.skjolber.unzip.TestSesselTjonnaCsvFileEntryHandler;
 import com.github.skjolber.unzip.TestSesselTjonnaCsvFileEntryHandler2;
 import com.github.skjolber.unzip.ZipFileEngine;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SesselTjonnaZipFileTest {
 
