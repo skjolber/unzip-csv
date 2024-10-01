@@ -7,10 +7,8 @@ import java.net.URL;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UrlZipFileFactoryTest {
@@ -20,7 +18,7 @@ public class UrlZipFileFactoryTest {
 	
 	@Test
 	public void testLocal() throws IOException {
-		URL url = new URL("http://localhost:" + randomServerPort + "/rb_norway-aggregated-gtfs.zip");
+		URL url = new URL("http://127.0.0.1:" + randomServerPort + "/rb_norway-aggregated-gtfs.zip");
 		
 		int count = Math.max(8, Runtime.getRuntime().availableProcessors());
 
