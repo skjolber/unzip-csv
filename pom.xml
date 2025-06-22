@@ -56,7 +56,7 @@
 		<univocity-parsers.version>2.9.1</univocity-parsers.version>
 		<commons-compress.version>1.27.1</commons-compress.version>
 		<commons-io.version>2.19.0</commons-io.version>
-		<sesseltjonna-csv.version>1.0.25</sesseltjonna-csv.version>
+		<sesseltjonna-csv.version>1.0.26</sesseltjonna-csv.version>
 		
 		<!-- test -->		
 		<junit.version>5.11.1</junit.version>
