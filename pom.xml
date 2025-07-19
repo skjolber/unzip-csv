@@ -55,7 +55,7 @@
 		<spring-boot.version>3.5.3</spring-boot.version>
 		<univocity-parsers.version>2.9.1</univocity-parsers.version>
 		<commons-compress.version>1.27.1</commons-compress.version>
-		<commons-io.version>2.19.0</commons-io.version>
+		<commons-io.version>2.20.0</commons-io.version>
 		<sesseltjonna-csv.version>1.0.26</sesseltjonna-csv.version>
 		
 		<!-- test -->		
